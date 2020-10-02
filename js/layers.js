@@ -211,7 +211,7 @@ var layers = {
 				player.e.buyables[11] = new Decimal(0)
 				player.e.buyables[12] = new Decimal(0)
 				player.e.buyables[13] = new Decimal(0)
-				doReset('c', true)
+				doReset('e', true)
 			},
 			respecText: "Respec your buildings and regain your spent power cells",
 			11: {
