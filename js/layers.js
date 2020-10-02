@@ -118,7 +118,7 @@ var layers = {
 		},
 
 		doReset(layer) {
-        	if(layer == "c") {
+        	if(layer == "e") {
         		if (player.e.milestones.includes("0")) {
         			player.p.points = new Decimal(0)
 					player.p.best = new Decimal(0)
