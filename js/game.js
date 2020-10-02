@@ -42,7 +42,9 @@ function getStartPlayer() {
 
 function getPointGen() {
 	let gain = new Decimal(1)
-	if (player.c.upgrades.includes(12)) gain = gain.times(layers.c.upgrades["12"].effect())
+	if (player.p.upgrades.includes(12)) {
+		gain = gain.mul(player.p.points.sqrt().plus(1))
+	}
 	return gain
 }
 
