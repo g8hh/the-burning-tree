@@ -48,7 +48,7 @@ function getPointGen() {
 	if (player.p.upgrades.includes(22)) {
 		gain = gain.mul(layers.p.upgrades[22].effect())
 	}
-	gain = gain.times(layers.c.buyables[11].effect(player.c.buyables[11]))
+	gain = gain.times(layers.e.buyables[11].effect(player.e.buyables[11]))
 	return gain
 }
 
