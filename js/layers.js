@@ -2,14 +2,14 @@ var layers = {
     p: {
         startData() { 
 			return {                  
-            unl: false,                         
-            points: new Decimal(0),             
-            total: new Decimal(0),
-			best: new Decimal(0),
+            	unl: false,
+            	points: new Decimal(0),
+            	total: new Decimal(0),
+				best: new Decimal(0),
 			}
 		},
 
-        color: "#AACCFF",                       
+        color: "#aaccff",
         resource: "prestige points",            
         row: 0,                                 
 
@@ -19,11 +19,7 @@ var layers = {
 		},
 
         requires() {
-			if (player.p.points.lte(10)) {
-				return new Decimal(1)
-			} else {
-				return new Decimal(10)
-			}
+        	return new Decimal(10)
 		},
         
         type: "normal",
@@ -32,8 +28,12 @@ var layers = {
         gainMult() {
 			let gain = new Decimal(1)
 			if (player.p.upgrades.includes(21)) {
-				gain = gain.mul(player.p.points.plus(1).log10().plus(1))
+				gain = gain.mul(layers.p.upgrades[21].effect())
 			}
+			if (player.p.upgrades.includes(22)) {
+				gain = gain.mul(layers.p.upgrades[22].effect())
+			}
+			gain = gain.mul(layers.c.buyables[12].effect(player.c.buyables[12]))
             return gain
         },
 		
@@ -69,7 +69,7 @@ var layers = {
 			},
 			12: {
 				desc: "Your Point gain is boosted by your unspent Prestige Points.",
-				cost: new Decimal(2),
+				cost: new Decimal(1),
 				unl() {
 					return player.p.upgrades.includes(11)
 				},
@@ -95,22 +95,201 @@ var layers = {
 			},
 			22: {
 				desc: "Your unspent Points and unspent Prestige Points now boost the gain of both.",
-				cost: new Decimal(25),
+				cost: new Decimal(15),
 				unl() {
 					return player.p.upgrades.includes(21)
 				},
 				effect() {
-					let a = player.points.pow(2)
+					return player.points.plus(1).log10().mul(player.p.points.plus(1).log10()).plus(1).sqrt().plus(1)
+				},
+				effDisp(fx) {
+					return format(fx) + "x"
 				}
 			},
 		},
 		
 		update(diff) {
 			if (player.p.upgrades.includes(11)) {
-				player.points = player.points.add(tmp.pointGen.times(diff)).max(0)
+				player.points = player.points.add(tmp.pointGen.mul(diff)).max(0)
 			}
 		},
+
+		tabFormat: ["main-display",
+			["prestige-button", function(){return "Reset for "}],
+			["display-text",
+				function() {return 'You have ' + format(player.points) + ' points'},
+				{"color": "white", "font-size": "15px"}],
+			"blank",
+			"upgrades"
+		],
     },
+
+	c: {
+    	startData() {
+    		return {
+    			unl: false,
+				points: new Decimal(0),
+				total: new Decimal(0),
+				best: new Decimal(0),
+				totalcells: new Decimal(0),
+				spentcells: new Decimal(0)
+			}
+		},
+
+		color: "#cccc33",
+		resource: "electricity",
+		row: 1,
+
+		baseResource: "prestige points",
+		baseAmount() {
+    		return player.p.points
+		},
+
+		requires() {
+    		return new Decimal(50)
+		},
+
+		type: "normal",
+		exponent: "0.75",
+
+		gainMult() {
+    		let gain = new Decimal(1)
+			gain.mul(layers.c.buyables[13].effect(player.c.buyables[13]))
+			return gain
+		},
+
+		gainExp() {
+    		return new Decimal(1)
+		},
+
+		layerShown() {
+    		return true
+		},
+
+		buyables: {
+    		rows: 1,
+			cols: 3,
+			respec() {
+    			player.c.spentcells = new Decimal(0)
+				player.c.buyables[11] = new Decimal(0)
+				player.c.buyables[12] = new Decimal(0)
+				player.c.buyables[13] = new Decimal(0)
+				doReset('c', true)
+			},
+			respecText: "Respec your buildings and regain your spent power cells",
+			11: {
+    			title: "Building 1",
+    			cost(x) {
+    				return x.pow(2)
+				},
+				effect(x) {
+    				let divisor = player.c.buyables[12].plus(player.c.buyables[13]).plus(1)
+    				return x.pow(1.5).div(divisor).plus(1)
+				},
+				display() {
+    				return "\nIncreases point gain.\n\nCurrently: " + format(layers.c.buyables[11].effect(player.c.buyables[11]))
+					+ "x\n\nCost: " + format(layers.c.buyables[11].cost(player.c.buyables[11].plus(1))) + " power cells"
+				},
+				unl() {
+    				return true
+				},
+				canAfford() {
+					return player.c.totalcells.minus(player.c.spentcells) >= layers.c.buyables[11].cost(player.c.buyables[11].plus(1))
+				},
+				buy() {
+					if (layers.c.buyables[11].canAfford()) {
+						player.c.spentcells = player.c.spentcells.plus(layers.c.buyables[11].cost(player.c.buyables[11].plus(1)))
+						player.c.buyables[11] = player.c.buyables[11].plus(1)
+						return true
+					} else {
+						return false
+					}
+				}
+			},
+			12: {
+				title: "Building 2",
+				cost(x) {
+					return x.pow(2)
+				},
+				effect(x) {
+					let divisor = player.c.buyables[11].plus(player.c.buyables[13]).plus(1)
+					return x.pow(1.2).div(divisor).plus(1)
+				},
+				display() {
+					return "\nIncreases prestige point gain.\n\nCurrently: " + format(layers.c.buyables[12].effect(player.c.buyables[12]))
+						+ "x\n\nCost: " + format(layers.c.buyables[12].cost(player.c.buyables[12].plus(1))) + " power cells"
+				},
+				unl() {
+					return true
+				},
+				canAfford() {
+					return player.c.totalcells.minus(player.c.spentcells) >= layers.c.buyables[12].cost(player.c.buyables[12].plus(1))
+				},
+				buy() {
+					if (layers.c.buyables[12].canAfford()) {
+						player.c.spentcells = player.c.spentcells.plus(layers.c.buyables[12].cost(player.c.buyables[12].plus(1)))
+						player.c.buyables[12] = player.c.buyables[12].plus(1)
+						return true
+					} else {
+						return false
+					}
+				}
+			},
+			13: {
+				title: "Building 3",
+				cost(x) {
+					return x.pow(2)
+				},
+				effect(x) {
+					let divisor = player.c.buyables[11].plus(player.c.buyables[12]).plus(1)
+					return x.div(divisor).plus(1)
+				},
+				display() {
+					return "\nIncreases electricity gain.\n\nCurrently: " + format(layers.c.buyables[13].effect(player.c.buyables[13]))
+						+ "x\n\nCost: " + format(layers.c.buyables[13].cost(player.c.buyables[13].plus(1))) + " power cells"
+				},
+				unl() {
+					return true
+				},
+				canAfford() {
+					return player.c.totalcells.minus(player.c.spentcells) >= layers.c.buyables[13].cost(player.c.buyables[13].plus(1))
+				},
+				buy() {
+					if (layers.c.buyables[13].canAfford()) {
+						player.c.spentcells = player.c.spentcells.plus(layers.c.buyables[13].cost(player.c.buyables[13].plus(1)))
+						player.c.buyables[13] = player.c.buyables[13].plus(1)
+						return true
+					} else {
+						return false
+					}
+				}
+			},
+		},
+
+		update(diff) {
+    		player.c.totalcells = player.c.points.root(2).floor()
+		},
+
+		branches: [
+			["p", 1]
+		],
+
+		tabFormat: ["main-display",
+			["prestige-button", function(){return "Reset for "}],
+			["display-text",
+				function() {return 'You have ' + format(player.p.points) + ' prestige points'},
+				{"color": "white", "font-size": "15px"}],
+			"blank",
+			["display-text",
+				function() {return 'Your electricity is giving you ' + format(player.c.totalcells.minus(player.c.spentcells)) + ' power cells'},
+				{"color": "white", "font-size": "17px"}],
+			["display-text",
+				function() {return 'Each building bought decreases the effectiveness of the others!'},
+				{"color": "white", "font-size": "17px"}],
+			"blank",
+			"buyables"
+		],
+	},
 } 
 
 function layerShown(layer){
