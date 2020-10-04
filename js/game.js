@@ -5,8 +5,8 @@ var NaNalert = false;
 var gameEnded = false;
 
 let VERSION = {
-	num: "1.1.1",
-	name: "Enhanced Edition"
+	num: "1.2.2",
+	name: "This changes everything!"
 }
 
 function startPlayerBase() {
@@ -23,7 +23,7 @@ function startPlayerBase() {
 		timePlayed: 0,
 		keepGoing: false,
 		hasNaN: false,
-		points: new Decimal(10),
+		points: new Decimal(0),
 	}
 }
 
@@ -42,13 +42,13 @@ function getStartPlayer() {
 
 function getPointGen() {
 	let gain = new Decimal(1)
-	if (player.p.upgrades.includes(12)) {
-		gain = gain.mul(layers.p.upgrades[12].effect())
+	if (player["p"].upgrades.includes(11)) {
+		gain = gain.mul(layers["p"].upgrades[11].effect())
 	}
-	if (player.p.upgrades.includes(22)) {
-		gain = gain.mul(layers.p.upgrades[22].effect())
+	if (player["p"].upgrades.includes(21)) {
+		gain = gain.mul(layers["p"].upgrades[21].effect())
 	}
-	gain = gain.times(layers.e.buyables[11].effect(player.e.buyables[11]))
+	gain = gain.mul(tmp.buyables["e"][11].effect)
 	return gain
 }
 
@@ -59,112 +59,6 @@ function inChallenge(layer, id){
 	if (layers[layer].challs[id].countsAs)
 		return layers[layer].challs[id].countsAs.includes(id)
 }
-
-function save() {
-	localStorage.setItem("prestige-tree", btoa(JSON.stringify(player)))
-}
-
-function fixSave() {
-	defaultData = startPlayerBase()
-	for (datum in defaultData){
-		if (player[datum] == undefined){
-			player[datum] = defaultData[datum]
-		}
-	}
-	for (layer in layers) {
-		defaultData = layers[layer].startData()
-		if (player[layer].upgrades == undefined)
-			player[layer].upgrades = []
-		if (player[layer].milestones == undefined)
-			player[layer].milestones = []
-		if (player[layer].challs == undefined)
-			player[layer].challs = []
-
-		for (datum in defaultData){
-			if (player[layer][datum] == undefined){
-				player[layer][datum] = defaultData[datum]
-			}
-		}
-
-		if (player[layer].spentOnBuyables == undefined)
-			player[layer].spentOnBuyables = new Decimal(0)
-
-		if (layers[layer].buyables) {
-			if (player[layer].buyables == undefined) player[layer].buyables = {}
-
-			for (id in layers[layer].buyables){
-				if (player[layer].buyables[id] == undefined && !isNaN(id))
-					player[layer].buyables[id] = new Decimal(0)
-			}
-		}
-	}
-}
-
-function load() {
-	let get = localStorage.getItem("prestige-tree");
-	if (get===null || get===undefined) player = getStartPlayer()
-	else player = Object.assign(getStartPlayer(), JSON.parse(atob(get)))
-	fixSave()
-
-	player.tab = "tree"
-	if (player.offlineProd) {
-		if (player.offTime === undefined) player.offTime = { remain: 0 }
-		player.offTime.remain += (Date.now() - player.time) / 1000
-	}
-	player.time = Date.now();
-	convertToDecimal();
-	versionCheck();
-	changeTheme();
-	changeTreeQuality();
-	updateTemp();
-	updateTemp();
-	loadVue();
-}
-
-function exportSave() {
-	let str = btoa(JSON.stringify(player))
-	
-	const el = document.createElement("textarea");
-	el.value = str;
-	document.body.appendChild(el);
-	el.select();
-    el.setSelectionRange(0, 99999);
-	document.execCommand("copy");
-	document.body.removeChild(el);
-}
-
-function importSave(imported=undefined, forced=false) {
-	if (imported===undefined) imported = prompt("Paste your save here")
-	try {
-		tempPlr = Object.assign(getStartPlayer(), JSON.parse(atob(imported)))
-		if(tempPlr.versionType != modInfo.id && !forced) // Wrong save (use "Forced" to force it to accept.)
-			return
-		player = tempPlr;
-		player.versionType = modInfo.id
-		fixSave()	
-		save()
-		window.location.reload()
-	} catch(e) {
-		return;
-	}
-}
-
-function versionCheck() {
-	let setVersion = true
-	
-	if (player.versionType===undefined||player.version===undefined) {
-		player.versionType = "Modding"
-		player.version = 0
-	}
-	
-	if (setVersion) {
-		if (player.versionType == "Modding" && VERSION.num > player.version) player.keepGoing = false
-		player.versionType = getStartPlayer().versionType
-		player.version = VERSION.num
-		player.beta = VERSION.beta
-	}
-}
-
 
 function convertToDecimal() {
 	player.points = new Decimal(player.points)
@@ -182,89 +76,6 @@ function convertToDecimal() {
 
 		if (layers[layer].convertToDecimal) layers[layer].convertToDecimal();
 	}
-}
-
-function toggleOpt(name) {
-	player[name] = !player[name]
-	if (name == "hqTree") changeTreeQuality()
-}
-
-function changeTreeQuality() {
-	var on = player.hqTree
-	document.body.style.setProperty('--hqProperty1', on ? "2px solid" : "4px solid")
-	document.body.style.setProperty('--hqProperty2a', on ? "-4px -4px 4px rgba(0, 0, 0, 0.25) inset" : "-4px -4px 4px rgba(0, 0, 0, 0) inset")
-	document.body.style.setProperty('--hqProperty2b', on ? "0px 0px 20px var(--background)" : "")
-	document.body.style.setProperty('--hqProperty3', on ? "2px 2px 4px rgba(0, 0, 0, 0.25)" : "none")
-}
-
-function exponentialFormat(num, precision) {
-	let e = num.log10().floor()
-	let m = num.div(Decimal.pow(10, e))
-	return m.toStringWithDecimalPlaces(3)+"e"+e.toStringWithDecimalPlaces(0)
-}
-
-function commaFormat(num, precision) {
-	if (num === null || num === undefined) return "NaN"
-	if (num.mag < 0.001) return (0).toFixed(precision)
-	return num.toStringWithDecimalPlaces(precision).replace(/\B(?=(\d{3})+(?!\d))/g, ",")
-}
-
-function fixValue(x, y = 0) {
-	return x || new Decimal(y)
-}
-
-function sumValues(x) {
-	x = Object.values(x)
-	if (!x[0]) return new Decimal(0)
-	return x.reduce((a, b) => Decimal.add(a, b))
-}
-
-function format(decimal, precision=2) {
-	decimal = new Decimal(decimal)
-	if (isNaN(decimal.sign)||isNaN(decimal.layer)||isNaN(decimal.mag)) {
-		player.hasNaN = true;
-		return "NaN"
-	}
-	if (decimal.sign<0) return "-"+format(decimal.neg(), precision)
-	if (decimal.mag == Number.POSITIVE_INFINITY) return "Infinity"
-	if (decimal.gte("eeee1000")) {
-		var slog = decimal.slog()
-		if (slog.gte(1e6)) return "F" + format(slog.floor())
-		else return Decimal.pow(10, slog.sub(slog.floor())).toStringWithDecimalPlaces(3) + "F" + commaFormat(slog.floor(), 0)
-	} else if (decimal.gte("1e1000")) return (Math.floor(decimal.mantissa + 0.01) + ("e"+formatWhole(decimal.log10())))
-	else if (decimal.gte(1e9)) return exponentialFormat(decimal, precision)
-	else if (decimal.gte(1e3)) return commaFormat(decimal, 0)
-	else return commaFormat(decimal, precision)
-}
-
-function formatWhole(decimal) {
-	return format(decimal, 0)
-}
-
-function formatTime(s) {
-	if (s<60) return format(s)+"s"
-	else if (s<3600) return formatWhole(Math.floor(s/60))+"m "+format(s%60)+"s"
-	else return formatWhole(Math.floor(s/3600))+"h "+formatWhole(Math.floor(s/60)%60)+"m "+format(s%60)+"s"
-}
-
-var onTreeTab = true
-function showTab(name) {
-	if (LAYERS.includes(name) && !layerUnl(name)) return
-
-	var toTreeTab = name == "tree"
-	player.tab = name
-	
-	if (toTreeTab != onTreeTab) {
-		document.getElementById("treeTab").className = toTreeTab ? "fullWidth" : "col left"
-		onTreeTab = toTreeTab
-		resizeCanvas()
-	}
-	delete player.notify[name]
-}
-
-function notifyLayer(name) {
-	if (player.tab == name || !layerUnl(name)) return
-	player.notify[name] = 1
 }
 
 function getResetGain(layer) {
@@ -296,20 +107,6 @@ function getNextAt(layer) {
 		if (layers[layer].resCeil) next = next.ceil()
 		return next;
 	}
-}
-
-function nodeShown(layer) {
-	if (layers[layer].layerShown()) return true
-	switch(layer) {
-		case "idk":
-			return player.l.unl
-			break;
-	}
-	return false
-}
-
-function layerUnl(layer) {
-	return LAYERS.includes(layer) && (player[layer].unl || (tmp.layerAmt[layer].gte(tmp.layerReqs[layer]) && layers[layer].layerShown()))
 }
 
 function rowReset(row, layer) {
@@ -356,6 +153,7 @@ function generatePoints(layer, diff) {
 }
 
 var prevOnReset
+
 function doReset(layer, force=false) {
 	let row = layers[layer].row
 	if (!force) {
@@ -393,7 +191,7 @@ function doReset(layer, force=false) {
 	}
 
 	prevOnReset = {...player} //Deep Copy
-	player.points = (row == 0 ? new Decimal(0) : new Decimal(10))
+	player.points = new Decimal(0)
 
 	for (let x = row; x >= 0; x--) rowReset(x, layer)
 	prevOnReset = undefined
@@ -411,7 +209,7 @@ function respecBuyables(layer) {
 
 function canAffordUpg(layer, id) {
 	upg = layers[layer].upgrades[id]
-	cost = upg.cost
+	cost = tmp.upgrades[layer][id].cost
 	return canAffordPurchase(layer, upg, cost) 
 }
 
@@ -426,7 +224,6 @@ function hasMilestone(layer, id){
 function hasChall(layer, id){
 	return (player[layer].challs.includes(id))
 }
-
 
 function canAffordPurchase(layer, thing, cost) {
 	if (thing.currencyInternalName){
@@ -449,22 +246,23 @@ function buyUpg(layer, id) {
 	if (!layers[layer].upgrades[id].unl()) return
 	if (player[layer].upgrades.includes(id)) return
 	upg = layers[layer].upgrades[id]
+	cost = tmp.upgrades[layer][id].cost
 
 	if (upg.currencyInternalName){
 		let name = upg.currencyInternalName
 		if (upg.currencyLayer){
 			let lr = upg.currencyLayer
-			if (player[lr][name].lt(upg.cost)) return
-			player[lr][name] = player[lr][name].sub(upg.cost)
+			if (player[lr][name].lt(cost)) return
+			player[lr][name] = player[lr][name].sub(cost)
 		}
 		else {
-			if (player[name].lt(upg.cost)) return
-			player[name] = player[name].sub(upg.cost)
+			if (player[name].lt(cost)) return
+			player[name] = player[name].sub(cost)
 		}
 	}
 	else {
-		if (player[layer].points.lt(upg.cost)) return
-		player[layer].points = player[layer].points.sub(upg.cost)	
+		if (player[layer].points.lt(cost)) return
+		player[layer].points = player[layer].points.sub(cost)	
 	}
 	player[layer].upgrades.push(id);
 	if (upg.onPurchase != undefined)
@@ -473,8 +271,8 @@ function buyUpg(layer, id) {
 
 function buyBuyable(layer, id) {
 	if (!player[layer].unl) return
-	if (!layers[layer].buyables[id].unl()) return
-	if (!layers[layer].buyables[id].canAfford()) return
+	if (!tmp.buyables[layer][id].unl) return
+	if (!tmp.buyables[layer][id].canAfford) return
 
 	layers[layer].buyables[id].buy()
 }
@@ -490,16 +288,10 @@ function resetRow(row) {
 		player[layers[layer]].unl = false
 		if (player[layers[layer]].order) player[layers[layer]].order = 0
 	}
-	player.points = new Decimal(10)
+	player.points = new Decimal(0)
 	updateTemp();
 	resizeCanvas();
 }
-
-
-function toggleAuto(toggle) {
-	player[toggle[0]][toggle[1]] = !player[toggle[0]][toggle[1]] 
-}
-
 
 function startChall(layer, x) {
 	if (!player[layer].unl) return
@@ -523,7 +315,7 @@ function canCompleteChall(layer, x)
 		let name = chall.currencyInternalName
 		if (chall.currencyLayer){
 			let lr = chall.currencyLayer
-			return !(player[lr][name].lt(chall.goal)) 
+			return !(player[lr][name].lt(readData(chall.goal))) 
 		}
 		else {
 			return !(player[name].lt(chall.cost))
@@ -548,81 +340,11 @@ function completeChall(layer, x) {
 	updateChallTemp(layer)
 }
 
-function adjustMSDisp() {
-	let displays = ["always", "automation", "incomplete", "never"];
-	player.msDisplay = displays[(displays.indexOf(player.msDisplay)+1)%4]
-}
-
-function milestoneShown(layer, id) {
-	complete = player[layer].milestones.includes(id)
-	auto = layers[layer].milestones[id].toggles
-
-	switch(player.msDisplay) {
-		case "always": 
-			return true;
-			break;
-		case "automation": 
-			return (auto)||!complete
-			break;
-		case "incomplete":
-			return !complete
-			break;
-		case "never": 
-			return false;
-			break;
-	}
-	return false;
-}
-
-
-
 VERSION.withoutName = "v" + VERSION.num + (VERSION.pre ? " Pre-Release " + VERSION.pre : VERSION.pre ? " Beta " + VERSION.beta : "")
 VERSION.withName = VERSION.withoutName + (VERSION.name ? ": " + VERSION.name : "")
 
 
 const ENDGAME = new Decimal("e280000000");
-
-function keepGoing() {
-	player.keepGoing = true;
-	showTab("tree")
-}
-
-function toNumber(x) {
-	if (x.mag !== undefined) return x.toNumber()
-	if (x + 0 !== x) return parseFloat(x)
-	return x
-}
-
-function updateMilestones(layer){
-	for (id in layers[layer].milestones){
-		if (!(player[layer].milestones.includes(id)) && layers[layer].milestones[id].done())
-			player[layer].milestones.push(id)
-	}
-}
-
-function addTime(diff, layer) {
-	let data = player
-	let time = data.timePlayed
-	if (layer) {
-		data = data[layer]
-		time = data.time
-	}
-
-	//I am not that good to perfectly fix that leak. ~ DB Aarex
-	if (time + 0 !== time) {
-		console.log("Memory leak detected. Trying to fix...")
-		time = toNumber(time)
-		if (isNaN(time) || time == 0) {
-			console.log("Couldn't fix! Resetting...")
-			time = layer ? player.timePlayed : 0
-			if (!layer) player.timePlayedReset = true
-		}
-	}
-	time += toNumber(diff)
-
-	if (layer) data.time = time
-	else data.timePlayed = time
-}
 
 function gameLoop(diff) {
 	if (player.points.gte(ENDGAME) || gameEnded) gameEnded = 1
@@ -664,13 +386,8 @@ function hardReset() {
 	window.location.reload();
 }
 
-var saveInterval = setInterval(function() {
-	if (player===undefined) return;
-	if (gameEnded&&!player.keepGoing) return;
-	if (player.autosave) save();
-}, 5000)
-
 var ticking = false
+
 var interval = setInterval(function() {
 	if (player===undefined||tmp===undefined) return;
 	if (ticking) return;
@@ -679,6 +396,7 @@ var interval = setInterval(function() {
 	let now = Date.now()
 	let diff = (now - player.time) / 1e3
 	if (player.offTime !== undefined) {
+		if (player.offTime.remain > modInfo.offlineLimit * 3600000) player.offlineTime.remain = modInfo.offlineLimit * 3600000
 		if (player.offTime.remain > 0) {
 			let offlineDiff = Math.max(player.offTime.remain / 10, diff)
 			player.offTime.remain -= offlineDiff
@@ -693,68 +411,3 @@ var interval = setInterval(function() {
 	gameLoop(diff)
 	ticking = false
 }, 50)
-
-const themes = {
-	1: "aqua"
-}
-const theme_names = {
-	aqua: "Aqua"
-}
-
-function changeTheme() {
-	let aqua = player.theme == "aqua"
-	colors_theme = colors[player.theme || "default"]
-	document.body.style.setProperty('--background', aqua ? "#001f3f" : "#0f0f0f")
-	document.body.style.setProperty('--background_tooltip', aqua ? "rgba(0, 15, 31, 0.75)" : "rgba(0, 0, 0, 0.75)")
-	document.body.style.setProperty('--color', aqua ? "#bfdfff" : "#dfdfdf")
-	document.body.style.setProperty('--points', aqua ? "#dfefff" : "#ffffff")
-}
-
-function getThemeName() {
-	return player.theme ? theme_names[player.theme] : "Default"
-}
-
-function switchTheme() {
-	if (player.theme === undefined) player.theme = themes[1]
-	else {
-		player.theme = themes[Object.keys(themes)[player.theme] + 1]
-		if (!player.theme) delete player.theme
-	}
-	changeTheme()
-	resizeCanvas()
-}
-
-function updateHotkeys()
-{
-    hotkeys = {};
-    for (layer in layers){
-        hk = layers[layer].hotkeys
-        if (hk){
-            for (id in hk){
-				hotkeys[hk[id].key] = hk[id]
-				hotkeys[hk[id].key].layer = layer
-            }
-        }
-    }
-}
-updateHotkeys()
-
-document.onkeydown = function(e) {
-	if (player===undefined) return;
-	if (gameEnded&&!player.keepGoing) return;
-	let shiftDown = e.shiftKey
-	let ctrlDown = e.ctrlKey
-	let key = e.key
-	if (ctrlDown) key = "ctrl+" + key
-	if (onFocused) return
-	if (ctrlDown && key != "-" && key != "_" && key != "+" && key != "=" && key != "r" && key != "R" && key != "F5") e.preventDefault()
-	if(hotkeys[key]){
-		if (player[hotkeys[key].layer].unl)
-			hotkeys[key].onPress()
-	}
-}
-
-var onFocused = false
-function focused(x) {
-	onFocused = x
-}

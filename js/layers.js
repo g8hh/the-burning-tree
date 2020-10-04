@@ -1,362 +1,334 @@
-var layers = {
-    p: {
-        startData() { 
-			return {                  
-            	unl: false,
-            	points: new Decimal(0),
-            	total: new Decimal(0),
-				best: new Decimal(0),
-			}
-		},
-
-        color: "#aaccff",
-        resource: "prestige points",            
-        row: 0,                                 
-
-        baseResource: "points",
-        baseAmount() {
-			return player.points
-		},
-
-        requires() {
-        	return new Decimal(10)
-		},
-        
-        type: "normal",
-        exponent: 0.5,
-
-        gainMult() {
-			let gain = new Decimal(1)
-			if (player.p.upgrades.includes(21)) {
-				gain = gain.mul(layers.p.upgrades[21].effect())
-			}
-			if (player.p.upgrades.includes(22)) {
-				gain = gain.mul(layers.p.upgrades[22].effect())
-			}
-			gain = gain.mul(layers.e.buyables[12].effect(player.e.buyables[12]))
-            return gain
-        },
-		
-        gainExp() {                  
-            return new Decimal(1)
-        },
-
-        layerShown() {
-			return true
-		},   
-		
-		hotkeys: [
-			{
-				key: "p",
-				desc: "p: reset your points for prestige points",
-				onPress() {
-					if (player.p.unl) {
-						doReset("p")
-					}
-				}
-			}
-		],
-		
-		upgrades: {
-			rows: 2,
-			cols: 2,
-			11: {
-				desc: "You gain 1 point per second.",
-				cost: new Decimal(1),
-				unl() {
-					return player.p.unl
-				}
-			},
-			12: {
-				desc: "Your Point gain is boosted by your unspent Prestige Points.",
-				cost: new Decimal(1),
-				unl() {
-					return player.p.upgrades.includes(11)
-				},
-				effect() {
-					return player.p.points.sqrt().plus(1)
-				},
-				effDisp(fx) {
-					return format(fx) + "x"
-				},
-			},
-			21: {
-				desc: "Your Prestige Point gain is boosted by your unspent Prestige Points.",
-				cost: new Decimal(5),
-				unl() {
-					return player.p.upgrades.includes(12)
-				},
-				effect() {
-					return player.p.points.plus(1).log10().plus(1)
-				},
-				effDisp(fx) {
-					return format(fx) + "x"
-				},
-			},
-			22: {
-				desc: "Your unspent Points and unspent Prestige Points now boost the gain of both.",
-				cost: new Decimal(15),
-				unl() {
-					return player.p.upgrades.includes(21)
-				},
-				effect() {
-					return player.points.plus(1).log10().mul(player.p.points.plus(1).log10()).plus(1).sqrt().plus(1)
-				},
-				effDisp(fx) {
-					return format(fx) + "x"
-				}
-			},
-		},
-		
-		update(diff) {
-			if (player.p.upgrades.includes(11)) {
-				player.points = player.points.add(tmp.pointGen.mul(diff)).max(0)
-			}
-			if (player.e.milestones.includes("1")) {
-				generatePoints("p", diff)
-			}
-		},
-
-		doReset(layer) {
-        	if(layer == "e") {
-        		if (player.e.milestones.includes("0")) {
-        			player.p.points = new Decimal(0)
-					player.p.best = new Decimal(0)
-					player.p.total = new Decimal(0)
-				} else {
-        			fullLayerReset("p")
-				}
-			}
-		},
-
-		tabFormat: ["main-display",
-			["prestige-button", function(){return "Reset for "}],
-			["display-text",
-				function() {return 'You have ' + format(player.points) + ' points'},
-				{"color": "white", "font-size": "15px"}],
-			"blank",
-			"upgrades"
-		],
+addLayer("p", {
+    startData() {
+        return {
+            unl: false,
+            points: new Decimal(0),
+            total: new Decimal(0),
+            best: new Decimal(0),
+        }
     },
 
-	e: {
-    	startData() {
-    		return {
-    			unl: false,
-				points: new Decimal(0),
-				total: new Decimal(0),
-				best: new Decimal(0),
-				totalcells: new Decimal(0),
-				spentcells: new Decimal(0)
-			}
-		},
+    color:() => "#AACCFF",
+    resource: "prestige points",
+    row: 0,
 
-		color: "#cccc33",
-		resource: "electricity",
-		row: 1,
+    baseResource: "points",
+    baseAmount() {
+        return player.points
+    },
 
-		convertToDecimal() {
-    		player.e.totalcells = new Decimal(player.e.totalcells)
-			player.e.spentcells = new Decimal(player.e.spentcells)
-		},
+    requires:() => new Decimal(10),
 
-		baseResource: "prestige points",
-		baseAmount() {
-    		return player.p.points
-		},
+    type: "normal",
+    exponent: 0.5,
 
-		requires() {
-    		return new Decimal(50)
-		},
+    gainMult() {
+        mult = new Decimal(1)
+        if (player[this.layer].upgrades.includes(12)) mult = mult.mul(this.upgrades[12].effect())
+        if (player[this.layer].upgrades.includes(22)) mult = mult.mul(this.upgrades[22].effect())
+        mult = mult.mul(tmp.buyables["e"][12].effect)
+        return mult
+    },
 
-		type: "normal",
-		exponent: "0.5",
+    gainExp() {
+        exp = new Decimal(1)
+        return exp
+    },
 
-		gainMult() {
-    		let gain = new Decimal(1)
-			gain = gain.mul(layers.e.buyables[13].effect(player.e.buyables[13]))
-			return gain
-		},
+    layerShown() {
+        return true
+    },
 
-		gainExp() {
-    		return new Decimal(1)
-		},
+    hotkeys: [
+        {
+            key: this.layer,
+            desc: "p: reset your points for prestige points",
+            onPress() {
+                if (player[this.layer]) {
+                    doReset(this.layer)
+                }
+            }
+        }
+    ],
 
-		layerShown() {
-    		return true
-		},
+    upgrades: {
+        rows: 2,
+        cols: 2,
+        11: {
+            desc:() => "Your Point gain is boosted by your unspent Prestige Points.",
+            cost:() => new Decimal(1),
+            unl() {
+                return player[this.layer].unl
+            },
+            effect() {
+                let ret = player[this.layer].points.add(1).sqrt()
+                return ret
+            },
+            effectDisplay(fx) {
+                return format(fx) + "x"
+            },
+        },
+        12: {
+            desc:() => "Your Prestige Point gain is boosted by your unspent Prestige Points.",
+            cost:() => new Decimal(5),
+            unl() {
+                return player[this.layer].upgrades.includes(11)
+            },
+            effect() {
+                let ret = player[this.layer].points.add(1).log(100).add(1)
+                return ret
+            },
+            effectDisplay(fx) {
+                return format(fx) + "x"
+            },
+        },
+        21: {
+            desc:() => "Your Point gain is boosted by your Points.",
+            cost:() => new Decimal(15),
+            unl() {
+                return player[this.layer].upgrades.includes(12)
+            },
+            effect() {
+                let ret = player.points.add(1).log(10).add(1)
+                return ret
+            },
+            effectDisplay(fx) {
+                return format(fx) + "x"
+            },
+        },
+        22: {
+            desc:() => "Your Prestige Point gain is boosted by your Points.",
+            cost:() => new Decimal(15),
+            unl() {
+                return player[this.layer].upgrades.includes(12)
+            },
+            effect() {
+                let ret = player.points.add(1).log(10000).add(1)
+                return ret
+            },
+            effectDisplay(fx) {
+                return format(fx) + "x"
+            },
+        },
+    },
 
-		milestones: {
-    		0: {
-    			requirementDesc: "3 electricity",
-				effectDesc: "You keep prestige upgrades on reset",
-				done() {
-    				return player.e.total.gte(3)
-				}
-			},
-			1: {
-				requirementDesc: "10 electricity",
-				effectDesc: "You gain 100% of prestige point gain per second",
-				done() {
-					return player.e.total.gte(10)
-				}
-			}
-		},
+    update(diff) {
+        player.points = player.points.add(tmp.pointGen.mul(diff)).max(0)
+        if (player["e"].milestones.includes("1")) {
+            generatePoints("p", diff)
+        }
+    },
 
-		buyables: {
-    		rows: 1,
-			cols: 3,
-			respec() {
-    			player.e.spentcells = new Decimal(0)
-				player.e.buyables[11] = new Decimal(0)
-				player.e.buyables[12] = new Decimal(0)
-				player.e.buyables[13] = new Decimal(0)
-				doReset('e', true)
-			},
-			respecText: "Respec your buildings and regain your spent power cells",
-			11: {
-    			title: "Building 1",
-    			cost(x) {
-    				return x.pow(2)
-				},
-				effect(x) {
-    				let divisor = player.e.buyables[12].plus(player.e.buyables[13]).div(4).plus(1)
-    				return x.pow(2).div(divisor).plus(1)
-				},
-				display() {
-    				return "\nIncreases point gain.\n\nCurrently: " + format(layers.e.buyables[11].effect(player.e.buyables[11]))
-					+ "x\n\nCost: " + format(layers.e.buyables[11].cost(player.e.buyables[11].plus(1))) + " power cells"
-				},
-				unl() {
-    				return true
-				},
-				canAfford() {
-					return player.e.totalcells.minus(player.e.spentcells).gte(layers.e.buyables[11].cost(player.e.buyables[11].plus(1)))
-				},
-				buy() {
-					if (layers.e.buyables[11].canAfford()) {
-						player.e.spentcells = player.e.spentcells.plus(layers.e.buyables[11].cost(player.e.buyables[11].plus(1)))
-						player.e.buyables[11] = player.e.buyables[11].plus(1)
-						return true
-					} else {
-						return false
-					}
-				}
-			},
-			12: {
-				title: "Building 2",
-				cost(x) {
-					return x.pow(2)
-				},
-				effect(x) {
-					let divisor = player.e.buyables[11].plus(player.e.buyables[13]).div(4).plus(1)
-					return x.pow(1.5).div(divisor).plus(1)
-				},
-				display() {
-					return "\nIncreases prestige point gain.\n\nCurrently: " + format(layers.e.buyables[12].effect(player.e.buyables[12]))
-						+ "x\n\nCost: " + format(layers.e.buyables[12].cost(player.e.buyables[12].plus(1))) + " power cells"
-				},
-				unl() {
-					return true
-				},
-				canAfford() {
-					return player.e.totalcells.minus(player.e.spentcells).gte(layers.e.buyables[12].cost(player.e.buyables[12].plus(1)))
-				},
-				buy() {
-					if (layers.e.buyables[12].canAfford()) {
-						player.e.spentcells = player.e.spentcells.plus(layers.e.buyables[12].cost(player.e.buyables[12].plus(1)))
-						player.e.buyables[12] = player.e.buyables[12].plus(1)
-						return true
-					} else {
-						return false
-					}
-				}
-			},
-			13: {
-				title: "Building 3",
-				cost(x) {
-					return x.pow(2)
-				},
-				effect(x) {
-					let divisor = player.e.buyables[11].plus(player.e.buyables[12]).div(4).plus(1)
-					return x.div(divisor).plus(1)
-				},
-				display() {
-					return "\nIncreases electricity gain.\n\nCurrently: " + format(layers.e.buyables[13].effect(player.e.buyables[13]))
-						+ "x\n\nCost: " + format(layers.e.buyables[13].cost(player.e.buyables[13].plus(1))) + " power cells"
-				},
-				unl() {
-					return true
-				},
-				canAfford() {
-					return player.e.totalcells.minus(player.e.spentcells).gte(layers.e.buyables[13].cost(player.e.buyables[13].plus(1)))
-				},
-				buy() {
-					if (layers.e.buyables[13].canAfford()) {
-						player.e.spentcells = player.e.spentcells.plus(layers.e.buyables[13].cost(player.e.buyables[13].plus(1)))
-						player.e.buyables[13] = player.e.buyables[13].plus(1)
-						return true
-					} else {
-						return false
-					}
-				}
-			},
-		},
+    doReset(resettingLayer) {
+        if(resettingLayer == "e") {
+            if (player["e"].milestones.includes("0")) {
+                player[this.layer].points = new Decimal(0)
+                player[this.layer].total = new Decimal(0)
+            } else {
+                fullLayerReset(this.layer)
+            }
+        } else if (layers[resettingLayer].row > this.row) {
+            fullLayerReset(this.layer)
+        }
+    },
 
-		update(diff) {
-    		player.e.totalcells = player.e.points.root(2).floor()
-		},
+    tabFormat: ["main-display",
+        ["prestige-button", function(){return "Reset for "}],
+        ["display-text",
+            function() {return 'You have ' + format(player.points) + ' points'},
+            {"color": "white", "font-size": "15px"}],
+        "blank",
+        "upgrades"
+    ],
+})
 
-		branches: [
-			["p", 1]
-		],
+addLayer("e", {
+    startData() {
+        return {
+            unl: false,
+            points: new Decimal(0),
+            total: new Decimal(0),
+            best: new Decimal(0),
+            cells: new Decimal(0),
+            totalcells: new Decimal(0),
+            bestcells: new Decimal(0),
+        }
+    },
 
-		tabFormat: ["main-display",
-			["prestige-button", function(){return "Reset for "}],
-			["display-text",
-				function() {return 'You have ' + format(player.p.points) + ' prestige points'},
-				{"color": "white", "font-size": "15px"}],
-			"milestones",
-			"blank",
-			["display-text",
-				function() {return 'Your electricity is giving you ' + format(player.e.totalcells.minus(player.e.spentcells), 0) + ' power cells'},
-				{"color": "white", "font-size": "17px"}],
-			["display-text",
-				function() {return 'Each building bought decreases the effectiveness of the others!'},
-				{"color": "white", "font-size": "17px"}],
-			"blank",
-			"buyables"
-		],
-	},
-} 
+    color:() => "#cccc33",
+    resource: "electricity",
+    row: 1,
 
-function layerShown(layer){
-    return layers[layer].layerShown();
-}
+    convertToDecimal() {
+        player[this.layer].cells = new Decimal(player[this.layer].cells)
+        player[this.layer].totalcells = new Decimal(player[this.layer].totalcells)
+        player[this.layer].bestcells = new Decimal(player[this.layer].bestcells)
+    },
 
-var LAYERS = Object.keys(layers);
+    baseResource: "prestige points",
+    baseAmount() {
+        return player["p"].points
+    },
 
-var hotkeys = {};
+    requires() {
+        return new Decimal(50)
+    },
 
+    type: "normal",
+    exponent: "0.5",
 
+    gainMult() {
+        let mult = new Decimal(1)
+        mult = mult.mul(layers[this.layer].buyables[13].effect(player[this.layer].buyables[13]))
+        return mult
+    },
 
-var ROW_LAYERS = {}
-for (layer in layers){
-    row = layers[layer].row
-    if(!ROW_LAYERS[row]) ROW_LAYERS[row] = {}
+    gainExp() {
+        return new Decimal(1)
+    },
 
-    ROW_LAYERS[row][layer]=layer;
-}
+    layerShown() {
+        return true
+    },
 
-function addLayer(layerName, layerData){ // Call this to add layers from a different file!
-    layers[layerName] = layerData
-    LAYERS = Object.keys(layers);
-    ROW_LAYERS = {}
-    for (layer in layers){
-        row = layers[layer].row
-        if(!ROW_LAYERS[row]) ROW_LAYERS[row] = {}
-    
-        ROW_LAYERS[row][layer]=layer;
-    }
-    updateHotkeys()
-}
+    milestones: {
+        0: {
+            requirementDesc:() => "3 electricity",
+            effectDesc:() => "You keep prestige upgrades on reset",
+            done() {
+                return player[this.layer].best.gte(3)
+            }
+        },
+        1: {
+            requirementDesc:() => "10 electricity",
+            effectDesc:() => "You gain 100% of prestige point gain per second",
+            done() {
+                return player[this.layer].total.gte(10)
+            }
+        }
+    },
+
+    buyables: {
+        rows: 1,
+        cols: 3,
+        respec() {
+            player[this.layer].cells = player[this.layer].cells.add(player[this.layer].spentOnBuyables)
+            resetBuyables(this.layer)
+            doReset(this.layer, true)
+        },
+        respecText:() => "Respec your buildings and regain your spent power cells",
+        11: {
+            title:() => "Building 1",
+            cost(x) {
+                return x.plus(1).pow(2).floor()
+            },
+            effect(x) {
+                let divisor = player[this.layer].buyables[12].add(player[this.layer].buyables[13]).div(4).add(1)
+                return x.div(divisor).add(1).pow(2)
+            },
+            display() {
+                let data = tmp.buyables[this.layer][this.id]
+                return "\nIncreases point gain.\n\nCurrently: " + format(data.effect)
+                    + "x\n\nCost: " + format(data.cost) + " power cells"
+            },
+            unl() {
+                return player[this.layer].unl
+            },
+            canAfford() {
+                return player[this.layer].cells.gte(tmp.buyables[this.layer][this.id].cost)
+            },
+            buy() {
+                cost = tmp.buyables[this.layer][this.id].cost
+                player[this.layer].cells = player[this.layer].cells.sub(cost)
+                player[this.layer].buyables[this.id] = player[this.layer].buyables[this.id].add(1)
+                player[this.layer].spentOnBuyables = player[this.layer].spentOnBuyables.add(cost)
+            },
+        },
+        12: {
+            title:() => "Building 2",
+            cost(x) {
+                return x.plus(1).pow(2).floor()
+            },
+            effect(x) {
+                let divisor = player[this.layer].buyables[11].add(player[this.layer].buyables[13]).div(4).add(1)
+                return x.div(divisor).add(1).pow(1.5)
+            },
+            display() {
+                let data = tmp.buyables[this.layer][this.id]
+                return "\nIncreases prestige point gain.\n\nCurrently: " + format(data.effect)
+                    + "x\n\nCost: " + format(data.cost) + " power cells"
+            },
+            unl() {
+                return player[this.layer].unl
+            },
+            canAfford() {
+                return player[this.layer].cells.gte(tmp.buyables[this.layer][this.id].cost)
+            },
+            buy() {
+                cost = tmp.buyables[this.layer][this.id].cost
+                player[this.layer].cells = player[this.layer].cells.sub(cost)
+                player[this.layer].buyables[this.id] = player[this.layer].buyables[this.id].add(1)
+                player[this.layer].spentOnBuyables = player[this.layer].spentOnBuyables.add(cost)
+            },
+        },
+        13: {
+            title:() => "Building 3",
+            cost(x) {
+                return x.plus(1).pow(2).floor()
+            },
+            effect(x) {
+                let divisor = player[this.layer].buyables[11].add(player[this.layer].buyables[12]).div(4).add(1)
+                return x.div(divisor).add(1).pow(1.2)
+            },
+            display() {
+                let data = tmp.buyables[this.layer][this.id]
+                return "\nIncreases electricity gain.\n\nCurrently: " + format(data.effect)
+                    + "x\n\nCost: " + format(data.cost) + " power cells"
+            },
+            unl() {
+                return player[this.layer].unl
+            },
+            canAfford() {
+                return player[this.layer].cells.gte(tmp.buyables[this.layer][this.id].cost)
+            },
+            buy() {
+                cost = tmp.buyables[this.layer][this.id].cost
+                player[this.layer].cells = player[this.layer].cells.sub(cost)
+                player[this.layer].buyables[this.id] = player[this.layer].buyables[this.id].add(1)
+                player[this.layer].spentOnBuyables = player[this.layer].spentOnBuyables.add(cost)
+            },
+        },
+    },
+
+    update(diff) {
+        if (player[this.layer].totalcells.lt(player[this.layer].points.root(1.5).floor())) {
+            amount = player[this.layer].points.root(1.5).floor().sub(player[this.layer].totalcells)
+            player[this.layer].totalcells = player[this.layer].totalcells.add(amount)
+            player[this.layer].cells = player[this.layer].cells.add(amount)
+            if (player[this.layer].cells.gte(player[this.layer].bestcells)) {
+                player[this.layer].bestcells = player[this.layer].cells
+            }
+        }
+    },
+
+    branches: [
+        ["p", 1]
+    ],
+
+    tabFormat: ["main-display",
+        ["prestige-button", function(){return "Reset for "}],
+        ["display-text",
+            function() {return 'You have ' + format(player.p.points) + ' prestige points'},
+            {"color": "white", "font-size": "15px"}],
+        "milestones",
+        "blank",
+        ["display-text",
+            function() {return 'Your electricity is giving you ' + format(player[this.layer].cells, 0) + ' power cells'},
+            {"color": "white", "font-size": "17px"}],
+        ["display-text",
+            function() {return 'Each building bought decreases the effectiveness of the others!'},
+            {"color": "white", "font-size": "17px"}],
+        "blank",
+        "buyables"
+    ],
+})
