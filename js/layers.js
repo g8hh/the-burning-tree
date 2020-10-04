@@ -174,6 +174,12 @@ addLayer("e", {
         return new Decimal(50)
     },
 
+    effect() {
+        return player[this.layer].points.plus(1).sqrt()
+    },
+
+    effectDescription:() => "supercharging your point gain by " + format(layers[this.layer].effect()) + "x",
+
     type: "normal",
     exponent: "0.5",
 
@@ -301,8 +307,8 @@ addLayer("e", {
     },
 
     update(diff) {
-        if (player[this.layer].totalcells.lt(player[this.layer].points.root(1.5).floor())) {
-            amount = player[this.layer].points.root(1.5).floor().sub(player[this.layer].totalcells)
+        if (player[this.layer].totalcells.lt(player[this.layer].points.root(2).floor())) {
+            amount = player[this.layer].points.root(2).floor().sub(player[this.layer].totalcells)
             player[this.layer].totalcells = player[this.layer].totalcells.add(amount)
             player[this.layer].cells = player[this.layer].cells.add(amount)
             if (player[this.layer].cells.gte(player[this.layer].bestcells)) {
