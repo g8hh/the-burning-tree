@@ -5,7 +5,7 @@ var NaNalert = false;
 var gameEnded = false;
 
 let VERSION = {
-	num: "1.2.2",
+	num: "1.2.3",
 	name: "This changes everything!"
 }
 
@@ -114,7 +114,7 @@ function rowReset(row, layer) {
 		if(layers[lr].doReset)
 			layers[lr].doReset(layer)
 		else
-			if(layers[layer].row > layers[lr].row) fullLayerReset(lr)
+		if(layers[layer].row > layers[lr].row) fullLayerReset(lr)
 	}
 }
 
@@ -127,7 +127,7 @@ function fullLayerReset(layer) {
 }
 
 function resetBuyables(layer){
-	if (layers[layer].buyables) 
+	if (layers[layer].buyables)
 		player[layer].buyables = getStartBuyables(layer)
 	player[layer].spentOnBuyables = new Decimal(0)
 }
@@ -162,11 +162,11 @@ function doReset(layer, force=false) {
 		if (layers[layer].type=="static") {
 			if (tmp.layerAmt[layer].lt(tmp.nextAt[layer])) return;
 			gain =(layers[layer].canBuyMax() ? gain : 1)
-		} 
-		
+		}
+
 		if (layers[layer].onPrestige)
 			layers[layer].onPrestige(gain)
-		
+
 		addPoints(layer, gain)
 		updateMilestones(layer)
 
@@ -179,7 +179,7 @@ function doReset(layer, force=false) {
 					if (!player[lr].unl) player[lr].order++
 			}
 		}
-	
+
 		tmp.layerAmt[layer] = new Decimal(0) // quick fix
 	}
 
@@ -210,7 +210,7 @@ function respecBuyables(layer) {
 function canAffordUpg(layer, id) {
 	upg = layers[layer].upgrades[id]
 	cost = tmp.upgrades[layer][id].cost
-	return canAffordPurchase(layer, upg, cost) 
+	return canAffordPurchase(layer, upg, cost)
 }
 
 function hasUpg(layer, id){
@@ -230,7 +230,7 @@ function canAffordPurchase(layer, thing, cost) {
 		let name = thing.currencyInternalName
 		if (thing.currencyLayer){
 			let lr = thing.currencyLayer
-			return !(player[lr][name].lt(cost)) 
+			return !(player[lr][name].lt(cost))
 		}
 		else {
 			return !(player[name].lt(cost))
@@ -262,7 +262,7 @@ function buyUpg(layer, id) {
 	}
 	else {
 		if (player[layer].points.lt(cost)) return
-		player[layer].points = player[layer].points.sub(cost)	
+		player[layer].points = player[layer].points.sub(cost)
 	}
 	player[layer].upgrades.push(id);
 	if (upg.onPurchase != undefined)
@@ -315,7 +315,7 @@ function canCompleteChall(layer, x)
 		let name = chall.currencyInternalName
 		if (chall.currencyLayer){
 			let lr = chall.currencyLayer
-			return !(player[lr][name].lt(readData(chall.goal))) 
+			return !(player[lr][name].lt(readData(chall.goal)))
 		}
 		else {
 			return !(player[name].lt(chall.cost))
