@@ -24,8 +24,8 @@ addLayer("p", {
 
     gainMult() {
         mult = new Decimal(1)
-        if (player[this.layer].upgrades.includes(12)) mult = mult.mul(2)
-        if (player[this.layer].upgrades.includes(22)) mult = mult.mul(this.upgrades[22].effect())
+        if (hasUpg(this.layer, 11)) mult = mult.mul(2)
+        if (hasUpg(this.layer, 22)) mult = mult.mul(this.upgrades[22].effect())
         mult = mult.mul(tmp.buyables["e"][12].effect)
         return mult
     },
@@ -178,7 +178,7 @@ addLayer("e", {
 
     gainMult() {
         let mult = new Decimal(1)
-        mult = mult.mul(layers[this.layer].buyables[13].effect(player[this.layer].buyables[13]))
+        mult = mult.mul(tmp.buyables[this.layer][13].effect)
         return mult
     },
 
