@@ -24,7 +24,7 @@ addLayer("p", {
 
     gainMult() {
         mult = new Decimal(1)
-        if (player[this.layer].upgrades.includes(12)) mult = mult.mul(this.upgrades[12].effect())
+        if (player[this.layer].upgrades.includes(12)) mult = mult.mul(2)
         if (player[this.layer].upgrades.includes(22)) mult = mult.mul(this.upgrades[22].effect())
         mult = mult.mul(tmp.buyables["e"][12].effect)
         return mult
@@ -69,17 +69,10 @@ addLayer("p", {
             },
         },
         12: {
-            desc:() => "Your Prestige Point gain is boosted by your unspent Prestige Points.",
+            desc:() => "Your prestige point gain is doubled.",
             cost:() => new Decimal(5),
             unl() {
                 return player[this.layer].upgrades.includes(11)
-            },
-            effect() {
-                let ret = player[this.layer].points.add(1).log(100).add(1)
-                return ret
-            },
-            effectDisplay(fx) {
-                return format(fx) + "x"
             },
         },
         21: {
@@ -103,7 +96,7 @@ addLayer("p", {
                 return player[this.layer].upgrades.includes(12)
             },
             effect() {
-                let ret = player.points.add(1).log(10000).add(1)
+                let ret = player.points.add(1).log(100).add(1)
                 return ret
             },
             effectDisplay(fx) {
@@ -199,17 +192,17 @@ addLayer("e", {
 
     milestones: {
         0: {
-            requirementDesc:() => "3 electricity",
+            requirementDesc:() => "5 electricity",
             effectDesc:() => "You keep prestige upgrades on reset",
             done() {
-                return player[this.layer].best.gte(3)
+                return player[this.layer].best.gte(20)
             }
         },
         1: {
-            requirementDesc:() => "10 electricity",
+            requirementDesc:() => "20 electricity",
             effectDesc:() => "You gain 100% of prestige point gain per second",
             done() {
-                return player[this.layer].total.gte(10)
+                return player[this.layer].total.gte(20)
             }
         }
     },
@@ -226,16 +219,16 @@ addLayer("e", {
         11: {
             title:() => "Building 1",
             cost(x) {
-                return x.plus(1).pow(2).floor()
+                return new Decimal(1.5).pow(x.plus(1)).floor()
             },
             effect(x) {
                 let divisor = player[this.layer].buyables[12].add(player[this.layer].buyables[13]).div(4).add(1)
-                return x.div(divisor).add(1).pow(2)
+                return x.div(divisor).add(1)
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
                 return "\nIncreases point gain.\n\nCurrently: " + format(data.effect)
-                    + "x\n\nCost: " + format(data.cost) + " power cells"
+                    + "x\n\nCost: " + format(data.cost, 0) + " power cells\n\nOwned: " + format(player[this.layer].buyables[this.id],0)
             },
             unl() {
                 return player[this.layer].unl
@@ -253,16 +246,16 @@ addLayer("e", {
         12: {
             title:() => "Building 2",
             cost(x) {
-                return x.plus(1).pow(2).floor()
+                return new Decimal(1.5).pow(x.plus(1)).floor()
             },
             effect(x) {
                 let divisor = player[this.layer].buyables[11].add(player[this.layer].buyables[13]).div(4).add(1)
-                return x.div(divisor).add(1).pow(1.5)
+                return x.div(divisor).add(1).sqrt().pow(1.5)
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
                 return "\nIncreases prestige point gain.\n\nCurrently: " + format(data.effect)
-                    + "x\n\nCost: " + format(data.cost) + " power cells"
+                    + "x\n\nCost: " + format(data.cost, 0) + " power cells\n\nOwned: " + format(player[this.layer].buyables[this.id],0)
             },
             unl() {
                 return player[this.layer].unl
@@ -280,16 +273,16 @@ addLayer("e", {
         13: {
             title:() => "Building 3",
             cost(x) {
-                return x.plus(1).pow(2).floor()
+                return new Decimal(1.5).pow(x.plus(1)).floor()
             },
             effect(x) {
                 let divisor = player[this.layer].buyables[11].add(player[this.layer].buyables[12]).div(4).add(1)
-                return x.div(divisor).add(1).pow(1.2)
+                return x.div(divisor).add(1).sqrt().pow(1.2)
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
                 return "\nIncreases electricity gain.\n\nCurrently: " + format(data.effect)
-                    + "x\n\nCost: " + format(data.cost) + " power cells"
+                    + "x\n\nCost: " + format(data.cost, 0) + " power cells\n\nOwned: " + format(player[this.layer].buyables[this.id],0)
             },
             unl() {
                 return player[this.layer].unl
