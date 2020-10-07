@@ -50,10 +50,60 @@ function formatTime(s) {
 	else return formatWhole(Math.floor(s/3600))+"h "+formatWhole(Math.floor(s/60)%60)+"m "+format(s%60)+"s"
 }
 
+function toPlaces(x, precision, maxAccepted) {
+	x = new Decimal(x)
+	let result = x.toStringWithDecimalPlaces(precision)
+	if (new Decimal(result).gte(maxAccepted)) {
+		result = new Decimal(maxAccepted-Math.pow(0.1, precision)).toStringWithDecimalPlaces(precision)
+	}
+	return result
+}
 // ************ Save stuff ************
 
 function save() {
 	localStorage.setItem(modInfo.id, btoa(JSON.stringify(player)))
+}
+
+function startPlayerBase() {
+	return {
+		tab: "tree",
+		time: Date.now(),
+		autosave: true,
+		notify: {},
+		msDisplay: "always",
+		offlineProd: true,
+		versionType: modInfo.id,
+		version: VERSION.num,
+		beta: VERSION.beta,
+		timePlayed: 0,
+		keepGoing: false,
+		hasNaN: false,
+		hideChalls: false,
+		points: new Decimal(10),
+		subtabs: {},
+	}
+}
+
+function getStartPlayer() {
+	playerdata = startPlayerBase()
+	for (layer in layers){
+		playerdata[layer] = layers[layer].startData()
+		playerdata[layer].buyables = getStartBuyables(layer)
+		playerdata[layer].spentOnBuyables = new Decimal(0)
+		playerdata[layer].upgrades = []
+		playerdata[layer].milestones = []
+		playerdata[layer].challs = []
+		if (layers[layer].tabFormat && !Array.isArray(layers[layer].tabFormat)) {
+			playerdata.subtabs[layer] = {}
+			playerdata.subtabs[layer].mainTabs = Object.keys(layers[layer].tabFormat)[0]
+		}
+		if (layers[layer].microtabs) {
+			if (playerdata.subtabs[layer] == undefined) playerdata.subtabs[layer] = {}
+			for (item in layers[layer].microtabs)
+			playerdata.subtabs[layer][item] = Object.keys(layers[layer].microtabs[item])[0]
+		}
+	}
+	return playerdata
 }
 
 function fixSave() {
@@ -89,6 +139,18 @@ function fixSave() {
 					player[layer].buyables[id] = new Decimal(0)
 			}
 		}
+		
+		if (layers[layer].tabFormat && !Array.isArray(layers[layer].tabFormat)) {
+			if (player.subtabs[layer] == undefined) player.subtabs[layer] = {}
+			if (player.subtabs[layer].mainTabs == undefined) player.subtabs[layer].mainTabs = Object.keys(layers[layer].tabFormat)[0]
+		}
+
+		if (layers[layer].microtabs) {
+			if (player.subtabs[layer] == undefined) player.subtabs[layer] = {}
+			for (item in layers[layer].microtabs)
+				if (player.subtabs[layer][item] == undefined) player.subtabs[layer][item] = Object.keys(layers[layer].microtabs[item])[0]
+		}
+	
 	}
 }
 
@@ -129,7 +191,7 @@ function importSave(imported=undefined, forced=false) {
 	if (imported===undefined) imported = prompt("Paste your save here")
 	try {
 		tempPlr = Object.assign(getStartPlayer(), JSON.parse(atob(imported)))
-		if(tempPlr.versionType != modInfo.id && !forced) // Wrong save (use "Forced" to force it to accept.)
+		if(tempPlr.versionType != modInfo.id && !forced && !confirm("This save appears to be for a different mod! Are you sure you want to import?")) // Wrong save (use "Forced" to force it to accept.)
 			return
 		player = tempPlr;
 		player.versionType = modInfo.id
@@ -145,12 +207,12 @@ function versionCheck() {
 	let setVersion = true
 	
 	if (player.versionType===undefined||player.version===undefined) {
-		player.versionType = "Modding"
+		player.versionType = modInfo.id
 		player.version = 0
 	}
 	
 	if (setVersion) {
-		if (player.versionType == "Modding" && VERSION.num > player.version) player.keepGoing = false
+		if (player.versionType == modInfo.id && VERSION.num > player.version) player.keepGoing = false
 		player.versionType = getStartPlayer().versionType
 		player.version = VERSION.num
 		player.beta = VERSION.beta
@@ -179,6 +241,7 @@ function changeTheme() {
 	document.body.style.setProperty('--background_tooltip', aqua ? "rgba(0, 15, 31, 0.75)" : "rgba(0, 0, 0, 0.75)")
 	document.body.style.setProperty('--color', aqua ? "#bfdfff" : "#dfdfdf")
 	document.body.style.setProperty('--points', aqua ? "#dfefff" : "#ffffff")
+	document.body.style.setProperty("--locked", aqua ? "#c4a7b3" : "#bf8f8f")
 }
 
 function getThemeName() {
@@ -198,8 +261,21 @@ function switchTheme() {
 // ************ Options ************
 
 function toggleOpt(name) {
+	if (name == "oldStyle" && styleCooldown>0) return;
+
 	player[name] = !player[name]
 	if (name == "hqTree") changeTreeQuality()
+	if (name == "oldStyle") updateStyle()
+}
+
+var styleCooldown = 0;
+
+
+function updateStyle() {
+	styleCooldown = 1;
+	let css = document.getElementById("styleStuff")
+	css.href = player.oldStyle?"oldStyle.css":"style.css"
+	needCanvasUpdate = true;
 }
 
 function changeTreeQuality() {

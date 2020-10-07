@@ -29,34 +29,42 @@ function loadVue() {
 		`
 	})
 
-		// data = a function returning the content
-		Vue.component('display-text', {
-			props: ['layer', 'data'],
-			template: `
+	// data = a function returning the content
+	Vue.component('display-text', {
+		props: ['layer', 'data'],
+		template: `
 			<span>{{readData(data)}}</span>
-			`
-		})
-	
-		// data = a function returning html content, with some limited functionality
-			Vue.component('raw-html', {
-				props: ['layer', 'data'],
-				template: `
-				<span v-html="readData(data)"></span>
-				`
-			})
-	
-		// Blank lines, data = optional height in px or pair with width and height in px
-		Vue.component('blank', {
-			props: ['layer', 'data'],
-			template: `
-				<div>
-				<div v-if="!data" v-bind:style="{'width': '8px', 'height': '17px'}"></div>
-				<div v-else-if="Array.isArray(data)" v-bind:style="{'width': data[0], 'height': data[1]}"></div>
-				<div v-else v-bind:style="{'width': '8px', 'height': 'data'}"><br></div>
-				</div>
-			`
-		})
+		`
+	})
 
+	// data = a function returning html content, with some limited functionality
+	Vue.component('raw-html', {
+		props: ['layer', 'data'],
+		template: `
+			<span v-html="readData(data)"></span>
+		`
+	})
+
+	// Blank space, data = optional height in px or pair with width and height in px
+	Vue.component('blank', {
+		props: ['layer', 'data'],
+		template: `
+			<div>
+			<div v-if="!data" v-bind:style="{'width': '8px', 'height': '17px'}"></div>
+			<div v-else-if="Array.isArray(data)" v-bind:style="{'width': data[0], 'height': data[1]}"></div>
+			<div v-else v-bind:style="{'width': '8px', 'height': 'data'}"><br></div>
+			</div>
+		`
+	})
+
+	// Displays an image, data is the URL
+	Vue.component('display-image', {
+		props: ['layer', 'data'],
+		template: `
+			<span><img v-bind:src= "readData(data)" v-bind:alt= "readData(data)"></span>
+		`
+	})
+		
 	// data = an array of Components to be displayed in a row
 	Vue.component('row', {
 		props: ['layer', 'data'],
@@ -73,21 +81,38 @@ function loadVue() {
 		`
 	})
 
-		// data = an array of Components to be displayed in a column
-		Vue.component('column', {
-			props: ['layer', 'data'],
-			template: `
-			<div class="upgTable">
-				<div class="upgCol">
-					<div v-for="item in data">
-					<div v-if="!Array.isArray(item)" v-bind:is="item" :layer= "layer"></div>
-					<div v-else-if="item.length==3" v-bind:style="(item[2] ? item[2] : {})" v-bind:is="item[0]" :layer= "layer" :data= "item[1]"></div>
-					<div v-else-if="item.length==2" v-bind:is="item[0]" :layer= "layer" :data= "item[1]"></div>
-					</div>
+	// data = an array of Components to be displayed in a column
+	Vue.component('column', {
+		props: ['layer', 'data'],
+		template: `
+		<div class="upgTable">
+			<div class="upgCol">
+				<div v-for="item in data">
+				<div v-if="!Array.isArray(item)" v-bind:is="item" :layer= "layer"></div>
+				<div v-else-if="item.length==3" v-bind:style="(item[2] ? item[2] : {})" v-bind:is="item[0]" :layer= "layer" :data= "item[1]"></div>
+				<div v-else-if="item.length==2" v-bind:is="item[0]" :layer= "layer" :data= "item[1]"></div>
 				</div>
 			</div>
+		</div>
+		`
+	})
+
+
+	// Data = width in px, by default fills the full area
+	Vue.component('h-line', {
+		props: ['layer', 'data'],
+			template:`
+				<hr v-bind:style="data ? {'width': data} : {}" class="hl">
 			`
 		})
+
+	// Data = height in px, by default is bad
+	Vue.component('v-line', {
+		props: ['layer', 'data'],
+		template: `
+			<div v-bind:style="data ? {'height': data} : {}" class="vl2"></div>
+		`
+	})
 
 	Vue.component('challs', {
 		props: ['layer'],
@@ -95,15 +120,25 @@ function loadVue() {
 		<div v-if="layers[layer].challs" class="upgTable">
 			<div v-for="row in layers[layer].challs.rows" class="upgRow">
 				<div v-for="col in layers[layer].challs.cols">
-					<div v-if="tmp.challs[layer][row*10+col].unl" v-bind:class="{hChall: true, done: player[layer].challs.includes(row*10+col), canComplete: tmp.challActive[layer][row*10+col]&&!player[layer].challs.includes(row*10+col)&&canCompleteChall(layer, row*10+col)}">
-						<br><h3>{{tmp.challs[layer][row*10+col].name}}</h3><br><br>
-						<button v-bind:class="{ longUpg: true, can: true, [layer]: true }" v-bind:style="{'background-color': tmp.layerColor[layer]}" v-on:click="startChall(layer, row*10+col)">{{player[layer].active==(row*10+col)?(canCompleteChall(layer, row*10+col)?"Finish":"Exit Early"):(player[layer].challs.includes(row*10+col)?"Completed":"Start")}}</button><br><br>
-						{{tmp.challs[layer][row*10+col].desc}}<br>
-						Goal: {{format(tmp.challs[layer][row*10+col].goal)}} {{layers[layer].challs[row*10+col].currencyDisplayName ? layers[layer].challs[row*10+col].currencyDisplayName : "points"}}<br>
-						Reward: {{tmp.challs[layer][row*10+col].reward}}<br>
-						<span v-if="tmp.challs[layer][row*10+col].effect!==undefined">Currently: {{(tmp.challs[layer][row*10+col].effectDisplay) ? (tmp.challs[layer][row*10+col].effectDisplay) : format(tmp.challs[layer][row*10+col].effect)}}</span>
-					</div>
+					<chall :layer = "layer" :data = "row*10+col"></chall>
 				</div>
+			</div>
+		</div>
+		`
+	})
+
+	// data = id
+	Vue.component('chall', {
+		props: ['layer', 'data'],
+		template: `
+		<div v-if="layers[layer].challs">
+			<div v-if="tmp.challs[layer][data].unl && !(player.hideChalls && hasChall(layer, [data]))" v-bind:class="{hChall: true, done: player[layer].challs.includes(data), canComplete: tmp.challActive[layer][data]&&!player[layer].challs.includes(data)&&canCompleteChall(layer, data)}">
+				<br><h3>{{tmp.challs[layer][data].name}}</h3><br><br>
+				<button v-bind:class="{ longUpg: true, can: true, [layer]: true }" v-bind:style="{'background-color': tmp.layerColor[layer]}" v-on:click="startChall(layer, data)">{{player[layer].active==(data)?(canCompleteChall(layer, data)?"Finish":"Exit Early"):(player[layer].challs.includes(data)?"Completed":"Start")}}</button><br><br>
+				{{tmp.challs[layer][data].desc}}<br>
+				Goal: {{format(tmp.challs[layer][data].goal)}} {{layers[layer].challs[data].currencyDisplayName ? layers[layer].challs[data].currencyDisplayName : "points"}}<br>
+				Reward: {{tmp.challs[layer][data].reward}}<br>
+				<span v-if="tmp.challs[layer][data].effect!==undefined">Currently: {{(tmp.challs[layer][data].effectDisplay) ? (tmp.challs[layer][data].effectDisplay) : format(tmp.challs[layer][data].effect)}}</span>
 			</div>
 		</div>
 		`
@@ -115,14 +150,25 @@ function loadVue() {
 		<div v-if="layers[layer].upgrades" class="upgTable">
 			<div v-for="row in layers[layer].upgrades.rows" class="upgRow">
 				<div v-for="col in layers[layer].upgrades.cols" class="upgAlign">
-					<button v-if="tmp.upgrades[layer][row*10+col].unl" v-on:click="buyUpg(layer, row*10+col)" v-bind:class="{ [layer]: true, upg: true, bought: player[layer].upgrades.includes(row*10+col), locked: (!(canAffordUpg(layer, row*10+col))&&!player[layer].upgrades.includes(row*10+col)), can: (canAffordUpg(layer, row*10+col)&&!player[layer].upgrades.includes(row*10+col))}" v-bind:style="{'background-color': tmp.layerColor[layer]}">
-					<span v-if= "tmp.upgrades[layer][row*10+col].title"><h3>{{tmp.upgrades[layer][row*10+col].title}}</h3><br></span>
-						{{ tmp.upgrades[layer][row*10+col].desc }}
-						<span v-if="tmp.upgrades[layer][row*10+col].effect"><br>Currently: {{(tmp.upgrades[layer][row*10+col].effectDisplay) ? (tmp.upgrades[layer][row*10+col].effectDisplay) : format(tmp.upgrades[layer][row*10+col].effect)}}</span>
-						<br><br>Cost: {{ formatWhole(tmp.upgrades[layer][row*10+col].cost) }} {{(layers[layer].upgrades[row*10+col].currencyDisplayName ? layers[layer].upgrades[row*10+col].currencyDisplayName : layers[layer].resource)}}</button>
+					<upgrade :layer = "layer" :data = "row*10+col"></upgrade>
 				</div>
 			</div>
 			<br>
+		</div>
+		`
+	})
+
+	// data = id
+	Vue.component('upgrade', {
+		props: ['layer', 'data'],
+		template: `
+		<div v-if="layers[layer].challs">
+			<button v-if="tmp.upgrades[layer][data].unl" v-on:click="buyUpg(layer, data)" v-bind:class="{ [layer]: true, upg: true, bought: player[layer].upgrades.includes(data), locked: (!(canAffordUpg(layer, data))&&!player[layer].upgrades.includes(data)), can: (canAffordUpg(layer, data)&&!player[layer].upgrades.includes(data))}" v-bind:style="{'background-color': tmp.layerColor[layer]}">
+				<span v-if= "tmp.upgrades[layer][data].title"><h3>{{tmp.upgrades[layer][data].title}}</h3><br></span>
+				{{ tmp.upgrades[layer][data].desc }}
+				<span v-if="tmp.upgrades[layer][data].effect"><br>Currently: {{(tmp.upgrades[layer][data].effectDisplay) ? (tmp.upgrades[layer][data].effectDisplay) : format(tmp.upgrades[layer][data].effect)}}</span>
+				<br><br>Cost: {{ formatWhole(tmp.upgrades[layer][data].cost) }} {{(layers[layer].upgrades[data].currencyDisplayName ? layers[layer].upgrades[data].currencyDisplayName : layers[layer].resource)}}
+			</button>
 		</div>
 		`
 	})
@@ -133,12 +179,20 @@ function loadVue() {
 		<div v-if="layers[layer].milestones">
 			<table>
 				<tr v-for="id in Object.keys(layers[layer].milestones)">
-					<td v-if="milestoneShown(layer, id)" v-bind:class="{milestone: !player[layer].milestones.includes(id), milestoneDone: player[layer].milestones.includes(id)}"><h3>{{tmp.milestones[layer][id].requirementDesc}}</h3><br>{{tmp.milestones[layer][id].effectDesc}}<br>
-					<span v-if="(layers[layer].milestones[id].toggles)&&(player[layer].milestones.includes(id))" v-for="toggle in layers[layer].milestones[id].toggles"><toggle :layer= "layer" :data= "toggle"></toggle>&nbsp;</span></td></tr>
+					<milestone :layer = "layer" :data = "id"></milestone>
 				</tr>
 			</table>
 			<br>
 		</div>
+		`
+	})
+
+	// data = id
+	Vue.component('milestone', {
+		props: ['layer', 'data'],
+		template: `
+		<td v-if="layers[layer].milestones && milestoneShown(layer, data)" v-bind:class="{milestone: !player[layer].milestones.includes(data), milestoneDone: player[layer].milestones.includes(data)}"><h3>{{tmp.milestones[layer][data].requirementDesc}}</h3><br>{{tmp.milestones[layer][data].effectDesc}}<br>
+		<span v-if="(layers[layer].milestones[data].toggles)&&(player[layer].milestones.includes(data))" v-for="toggle in layers[layer].milestones[data].toggles"><toggle :layer= "layer" :data= "toggle"></toggle>&nbsp;</span></td></tr>
 		`
 	})
 
@@ -155,9 +209,11 @@ function loadVue() {
 		template: `
 		<span>
 			<button v-if="layers[layer].type=='normal'" v-bind:class="{ [layer]: true, reset: true, locked: tmp.layerAmt[layer].lt(tmp.layerReqs[layer]), can: tmp.layerAmt[layer].gte(tmp.layerReqs[layer]) }" v-bind:style="{'background-color': tmp.layerColor[layer]}" v-on:click="doReset(layer)"><span v-if="player[layer].points.lt(1e3)">{{data ? data() : "Reset for "}}</span>+<b>{{formatWhole(tmp.resetGain[layer])}}</b> {{layers[layer].resource}}<span v-if="tmp.resetGain[layer].lt(100) && player[layer].points.lt(1e3)"><br><br>Next at {{ (layers[layer].resCeil ? formatWhole(tmp.nextAt[layer]) : format(tmp.nextAt[layer])) }} {{ layers[layer].baseResource }}</span></button>
-			<button v-if="layers[layer].type=='static'" v-bind:class="{ [layer]: true, reset: true, locked: tmp.layerAmt[layer].lt(tmp.nextAt[layer]), can: tmp.layerAmt[layer].gte(tmp.nextAt[layer]) }" v-bind:style="{'background-color': tmp.layerColor[layer]}" v-on:click="doReset(layer)"><span v-if="player[layer].points.lt(10)">{{data ? data() : "Reset for "}}</span>+<b>{{formatWhole(tmp.resetGain[layer])}}</b> {{layers[layer].resource}}<br><br><span v-if="player[layer].points.lt(10)">Req: {{formatWhole(tmp.layerAmt[layer])}} / </span>{{(layers[layer].resCeil ? formatWhole(tmp.nextAt[layer]) : format(tmp.nextAt[layer]))}} {{ layers[layer].baseResource }}</button>
-		</span>
+			<button v-if="layers[layer].type=='static'" v-bind:class="{ [layer]: true, reset: true, locked: tmp.layerAmt[layer].lt(tmp.nextAt[layer]), can: tmp.layerAmt[layer].gte(tmp.nextAt[layer]) }" v-bind:style="{'background-color': tmp.layerColor[layer]}" v-on:click="doReset(layer)"><span v-if="player[layer].points.lt(10)">{{data ? data() : "Reset for "}}</span>+<b>{{formatWhole(tmp.resetGain[layer])}}</b> {{layers[layer].resource}}<br><br><span v-if="player[layer].points.lt(10)">{{(tmp.layerAmt[layer].gte(tmp.nextAt[layer])&&layers[layer].canBuyMax && layers[layer].canBuyMax())?"Next":"Req"}}: {{formatWhole(tmp.layerAmt[layer])}} / </span>{{(layers[layer].resCeil ? formatWhole(tmp.nextAtDisp[layer]) : format(tmp.nextAtDisp[layer]))}} {{ layers[layer].baseResource }}</button>		
+			<button v-if="layers[layer].type=='custom'" v-bind:class="{ [layer]: true, reset: true, locked: !tmp.canReset[layer], can: tmp.canReset[layer] }" v-bind:style="{'background-color': tmp.layerColor[layer], 'white-space': 'pre-line' }" v-on:click="doReset(layer)" v-html="tmp.prestigeButtonText[layer]"></button>		
+			</span>
 		`
+	
 	})
 
 	// Displays the main resource for the layer
@@ -191,8 +247,8 @@ function loadVue() {
 		<div v-if="layers[layer].buyables">
 			<button 
 				v-if="tmp.buyables[layer][data].unl" 
-				v-bind:class="{ upg: true, can: tmp.buyables[layer][data].canAfford, locked: !tmp.buyables[layer][data].canAfford}"
-				v-bind:style="{'background-color': tmp.layerColor[layer], 'height': (size ? size : '200px'), 'width': (size ? size : '200px')}"
+				v-bind:class="{ buyable: true, can: tmp.buyables[layer][data].canAfford, locked: !tmp.buyables[layer][data].canAfford}"
+				v-bind:style="{'background-color': tmp.layerColor[layer], 'height': (size ? size : 'inherit'), 'width': (size ? size : '200px')}"
 				v-on:click="buyBuyable(layer, data)">
 				<span v-if= "layers[layer].buyables[data].title"><h2>{{tmp.buyables[layer][data].title}}</h2><br></span>
 				<span v-bind:style="{'white-space': 'pre-line'}">{{tmp.buyables[layer][data].display}}</span>
@@ -200,6 +256,38 @@ function loadVue() {
 		</div>
 		`
 	})
+
+	// data = button size, in px
+	Vue.component('microtabs', {
+		props: ['layer', 'data'],
+		computed: {
+			currentTab() {return player.subtabs[layer][data]}
+		},
+		template: `
+		<div v-if="layers[layer].microtabs" :style="{'border-style': 'solid'}">
+			<div class="upgTable">
+				<tab-buttons :layer="layer" :data="layers[layer].microtabs[data]" :name="data"></tab-buttons>
+			</div>
+			<column v-bind:style="readData(layers[layer].microtabs[data][player.subtabs[layer][data]].style)" :layer="layer" :data="layers[layer].microtabs[data][player.subtabs[layer][data]].content"></column>
+		</div>
+		`
+	})
+
+
+	// NOT FOR USE IN STANDARD TAB FORMATTING
+	Vue.component('tab-buttons', {
+		props: ['layer', 'data', 'name'],
+		template: `
+			<div class="upgRow">
+				<div v-for="tab in Object.keys(data)">
+					<button v-if="!data[tab].unl || data[tab].unl()" class="tabButton" v-bind:style="[{'border-color': tmp.layerColor[layer]}, readData(data[tab].buttonStyle)]" v-on:click="player.subtabs[layer][name] = tab">{{tab}}</button>
+				</div>
+			</div>
+		`
+	})
+
+
+
 
 	app = new Vue({
 		el: "#app",

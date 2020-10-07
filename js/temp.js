@@ -1,4 +1,6 @@
 function updateTemp() {
+	if (tmp.genPoints == undefined) tmp.genPoints = false
+
 	if (!tmp.challActive) {tmp.challActive = {}}
 	if (!tmp.challs) tmp.challs = {}
 	for (layer in layers) {
@@ -45,7 +47,9 @@ function updateTemp() {
 	if (!tmp.effectDescription) tmp.effectDescription = {}
 	if (!tmp.style) tmp.style = {}
 	if (!tmp.notify) tmp.notify = {}
-
+	if (!tmp.nextAtDisp) tmp.nextAtDisp = {}
+	if (!tmp.prestigeButtonText) tmp.prestigeButtonText = {}
+	if (!tmp.canReset) tmp.canReset = {}
 
 	for (layer in layers) {
 		if (layers[layer].color) tmp.layerColor[layer] = layers[layer].color()
@@ -57,7 +61,10 @@ function updateTemp() {
 		tmp.resetGain[layer] = getResetGain(layer)
 		tmp.nextAt[layer] = getNextAt(layer)
 		tmp.notify[layer] = shouldNotify(layer)
+		tmp.nextAtDisp[layer] = getNextAt(layer, true)
 		if (layers[layer].effectDescription) tmp.effectDescription[layer] = layers[layer].effectDescription()
+		if (layers[layer].canReset) tmp.canReset[layer] = layers[layer].canReset()
+		if (layers[layer].prestigeButtonText) tmp.prestigeButtonText[layer] = layers[layer].prestigeButtonText()
 
 	}
 

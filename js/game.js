@@ -5,42 +5,20 @@ var NaNalert = false;
 var gameEnded = false;
 
 let VERSION = {
-	num: "1.2.4",
-	name: "This changes everything!"
+	num: "1.3",
+	name: "Tabception... ception!"
 }
 
-function startPlayerBase() {
-	return {
-		tab: "tree",
-		time: Date.now(),
-		autosave: true,
-		notify: {},
-		msDisplay: "always",
-		offlineProd: true,
-		versionType: "Modding",
-		version: VERSION.num,
-		beta: VERSION.beta,
-		timePlayed: 0,
-		keepGoing: false,
-		hasNaN: false,
-		points: new Decimal(10),
-	}
-}
+// Determines if it should show points/sec
+function showPointGen(){
+	return (tmp.pointGen.neq(new Decimal(0)))
+} 
 
-function getStartPlayer() {
-	playerdata = startPlayerBase()
-	for (layer in layers){
-		playerdata[layer] = layers[layer].startData()
-		playerdata[layer].buyables = getStartBuyables(layer)
-		playerdata[layer].spentOnBuyables = new Decimal(0)
-		playerdata[layer].upgrades = []
-		playerdata[layer].milestones = []
-		playerdata[layer].challs = []
-	}
-	return playerdata
-}
-
+// Calculate points/sec!
 function getPointGen() {
+	if(!hasUpg("c", 11))
+		return new Decimal(0)
+
 	let gain = new Decimal(1)
 	if (hasUpg("p",12)) {
 		gain = gain.mul(layers["p"].upgrades[12].effect())
@@ -55,6 +33,8 @@ function getPointGen() {
 	}
 	return gain
 }
+
+
 
 // Function to determine if the player is in a challenge
 function inChallenge(layer, id){
@@ -83,36 +63,51 @@ function convertToDecimal() {
 	}
 }
 
-function getResetGain(layer) {
+function getResetGain(layer, useType = null) {
+	let type = useType
+	if (!useType) type = layers[layer].type
+
 	if (tmp.gainExp[layer].eq(0)) return new Decimal(0)
-	if (layers[layer].type=="static") {
+	if (type=="static") {
 		if ((!layers[layer].canBuyMax()) || tmp.layerAmt[layer].lt(tmp.layerReqs[layer])) return new Decimal(1)
 		let gain = tmp.layerAmt[layer].div(tmp.layerReqs[layer]).div(tmp.gainMults[layer]).max(1).log(layers[layer].base).times(tmp.gainExp[layer]).pow(Decimal.pow(layers[layer].exponent, -1))
 		return gain.floor().sub(player[layer].points).add(1).max(1);
-	} else {
+	} else if (type=="normal"){
 		if (tmp.layerAmt[layer].lt(tmp.layerReqs[layer])) return new Decimal(0)
 		let gain = tmp.layerAmt[layer].div(tmp.layerReqs[layer]).pow(layers[layer].exponent).times(tmp.gainMults[layer]).pow(tmp.gainExp[layer])
 		if (gain.gte("e1e7")) gain = gain.sqrt().times("e5e6")
 		return gain.floor().max(0);
+	} else if (type=="custom"){
+		return layers[layer].getResetGain()
+	} else {
+		return new Decimal(0)
 	}
 }
 
-function getNextAt(layer) {
+function getNextAt(layer, canMax=false, useType = null) {
+	let type = useType
+	if (!useType) type = layers[layer].type
+
 	if (tmp.gainExp[layer].eq(0)) return new Decimal(1/0)
-	if (layers[layer].type=="static") {
-		let amt = player[layer].points
+	if (type=="static") 
+	{
+		if (!layers[layer].canBuyMax()) canMax = false
+		let amt = player[layer].points.plus((canMax&&tmp.layerAmt[layer].gte(tmp.nextAt[layer]))?tmp.resetGain[layer]:0)
 		let extraCost = Decimal.pow(layers[layer].base, amt.pow(layers[layer].exponent).div(tmp.gainExp[layer])).times(tmp.gainMults[layer])
 		let cost = extraCost.times(tmp.layerReqs[layer]).max(tmp.layerReqs[layer])
 		if (layers[layer].resCeil) cost = cost.ceil()
 		return cost;
-	} else {
+	} else if (type=="normal"){
 		let next = tmp.resetGain[layer].add(1)
 		if (next.gte("e1e7")) next = next.div("e5e6").pow(2)
 		next = next.root(tmp.gainExp[layer]).div(tmp.gainMults[layer]).root(layers[layer].exponent).times(tmp.layerReqs[layer]).max(tmp.layerReqs[layer])
 		if (layers[layer].resCeil) next = next.ceil()
 		return next;
-	}
-}
+	} else if (type=="custom"){
+		return layers[layer].getNextAt(canMax)
+	} else {
+		return new Decimal(0)
+	}}
 
 // Return true if the layer should be highlighted. By default checks for upgrades only.
 function shouldNotify(layer){
@@ -133,8 +128,10 @@ function shouldNotify(layer){
 
 function rowReset(row, layer) {
 	for (lr in ROW_LAYERS[row]){
-		if(layers[lr].doReset)
+		if(layers[lr].doReset) {
+			player[lr].active = null // Exit challenges on any row reset on an equal or higher row
 			layers[lr].doReset(layer)
+		}
 		else
 		if(layers[layer].row > layers[lr].row) fullLayerReset(lr)
 	}
@@ -145,6 +142,16 @@ function fullLayerReset(layer) {
 	player[layer].upgrades = []
 	player[layer].milestones = []
 	player[layer].challs = []
+	if (layers[layer].tabFormat && !Array.isArray(layers[layer].tabFormat)) {
+		if (player.subtabs[layer] == undefined) player.subtabs[layer] = {}
+		if (player.subtabs[layer].mainTabs == undefined) player.subtabs[layer].mainTabs = Object.keys(layers[layer].tabFormat)[0]
+	}
+
+	if (layers[layer].microtabs) {
+		if (player.subtabs[layer] == undefined) player.subtabs[layer] = {}
+		for (item in layers[layer].microtabs)
+			if (player.subtabs[layer][item] == undefined) player.subtabs[layer][item] = Object.keys(layers[layer].microtabs[item])[0]
+	}
 	resetBuyables(layer)
 }
 
@@ -184,7 +191,10 @@ function doReset(layer, force=false) {
 		if (layers[layer].type=="static") {
 			if (tmp.layerAmt[layer].lt(tmp.nextAt[layer])) return;
 			gain =(layers[layer].canBuyMax() ? gain : 1)
-		}
+		} 
+		if (layers[layer].type=="custom") {
+			if (!tmp.canReset[layer]) return;
+		} 
 
 		if (layers[layer].onPrestige)
 			layers[layer].onPrestige(gain)
@@ -197,8 +207,9 @@ function doReset(layer, force=false) {
 			needCanvasUpdate = true;
 
 			if (layers[layer].incr_order){
-				for (lr in layers[layer].incr_order)
-					if (!player[lr].unl) player[lr].order++
+				lrs = layers[layer].incr_order
+				for (lr in lrs)
+					if (!player[lrs[lr]].unl) player[lrs[lr]].order++
 			}
 		}
 
@@ -240,11 +251,23 @@ function hasUpg(layer, id){
 }
 
 function hasMilestone(layer, id){
-	return (player[layer].milestones.includes(toNumber(id)))
+	return (player[layer].milestones.includes(toNumber(id)) || player[layer].milestones.includes(id))
 }
 
 function hasChall(layer, id){
 	return (player[layer].challs.includes(toNumber(id)))
+}
+
+function upgEffect(layer, id){
+	return (tmp.upgrades[layer][id].effect)
+}
+
+function challEffect(layer, id){
+	return (tmp.challs[layer][id].effect)
+}
+
+function buyableEffect(layer, id){
+	return (tmp.buyables[layer][id].effect)
 }
 
 function canAffordPurchase(layer, thing, cost) {

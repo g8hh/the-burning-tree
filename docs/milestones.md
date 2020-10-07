@@ -11,7 +11,7 @@ Milestones should be formatted like this:
     }
 ```
 
-You can use inChall(layer, id) and hasChall(layer, id) to determine if the player is currently in a challenge,
+You can use hasMilestone(layer, id) to determine if the player has a given milestone
 
 Milestone features:
 
@@ -28,6 +28,8 @@ Milestone features:
            It is defined as an array of paired items, one pair per toggle. The first is the internal name of the layer
            the value being toggled is stored in, and the second is the internal name of the variable to toggle.
            (e.g. [["b", "auto"], ["g", "auto"])
+
+           **Tip:** Toggles are not de-set if the milestone becomes locked! In this case, you should also check if the player has the milestone.
 
 - layer: **Assigned automagically**. It's the same value as the name of this layer, so you can do player[this.layer].points or similar
 
