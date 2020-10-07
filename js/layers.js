@@ -24,9 +24,10 @@ addLayer("p", {
 
     gainMult() {
         mult = new Decimal(1)
-        if (hasUpg(this.layer, 11)) mult = mult.mul(2)
-        if (hasUpg(this.layer, 22)) mult = mult.mul(this.upgrades[22].effect())
+        if (hasUpg(this.layer, 13)) mult = mult.mul(2)
+        if (hasUpg(this.layer, 21)) mult = mult.mul(this.upgrades[21].effect())
         mult = mult.mul(tmp.buyables["e"][12].effect)
+        mult = mult.mul(layers["i"].effect())
         return mult
     },
 
@@ -53,12 +54,19 @@ addLayer("p", {
 
     upgrades: {
         rows: 2,
-        cols: 2,
+        cols: 4,
         11: {
-            desc:() => "Your Point gain is boosted by your unspent Prestige Points.",
+            desc:() => "You gain 1 point per second.",
             cost:() => new Decimal(1),
             unl() {
                 return player[this.layer].unl
+            },
+        },
+        12: {
+            desc:() => "Your point gain is boosted by your unspent prestige points.",
+            cost:() => new Decimal(1),
+            unl() {
+                return hasUpg(this.layer, 11)
             },
             effect() {
                 let ret = player[this.layer].points.add(1).sqrt()
@@ -68,18 +76,18 @@ addLayer("p", {
                 return format(fx) + "x"
             },
         },
-        12: {
+        13: {
             desc:() => "Your prestige point gain is doubled.",
             cost:() => new Decimal(5),
             unl() {
-                return player[this.layer].upgrades.includes(11)
+                return hasUpg(this.layer, 12)
             },
         },
-        21: {
-            desc:() => "Your Point gain is boosted by your Points.",
-            cost:() => new Decimal(15),
+        14: {
+            desc:() => "Your point gain is boosted by your points.",
+            cost:() => new Decimal(10),
             unl() {
-                return player[this.layer].upgrades.includes(12)
+                return hasUpg(this.layer, 13)
             },
             effect() {
                 let ret = player.points.add(1).log(10).add(1)
@@ -89,11 +97,11 @@ addLayer("p", {
                 return format(fx) + "x"
             },
         },
-        22: {
-            desc:() => "Your Prestige Point gain is boosted by your Points.",
+        21: {
+            desc:() => "Your prestige point gain is boosted by your points.",
             cost:() => new Decimal(15),
             unl() {
-                return player[this.layer].upgrades.includes(12)
+                return hasUpg(this.layer, 14)
             },
             effect() {
                 let ret = player.points.add(1).log(100).add(1)
@@ -103,10 +111,25 @@ addLayer("p", {
                 return format(fx) + "x"
             },
         },
+        22: {
+            desc:() => "Unimplemented",
+            cost:() => NaN,
+            unl:() => false,
+        },
+        23: {
+            desc:() => "Unimplemented",
+            cost:() => NaN,
+            unl:() => false,
+        },
+        24: {
+            desc:() => "Unimplemented",
+            cost:() => NaN,
+            unl:() => false,
+        },
     },
 
     update(diff) {
-        player.points = player.points.add(tmp.pointGen.mul(diff)).max(0)
+        if (hasUpg(this.layer, 11)) player.points = player.points.add(tmp.pointGen.mul(diff)).max(0)
         if (player["e"].milestones.includes("1")) {
             generatePoints("p", diff)
         }
@@ -115,6 +138,13 @@ addLayer("p", {
     doReset(resettingLayer) {
         if(resettingLayer == "e") {
             if (player["e"].milestones.includes("0")) {
+                player[this.layer].points = new Decimal(0)
+                player[this.layer].total = new Decimal(0)
+            } else {
+                fullLayerReset(this.layer)
+            }
+        } else if (resettingLayer == "i") {
+            if (player["i"].milestones.includes("0")) {
                 player[this.layer].points = new Decimal(0)
                 player[this.layer].total = new Decimal(0)
             } else {
@@ -142,6 +172,7 @@ addLayer("e", {
             points: new Decimal(0),
             total: new Decimal(0),
             best: new Decimal(0),
+            order: 0,
             cells: new Decimal(0),
             totalcells: new Decimal(0),
             bestcells: new Decimal(0),
@@ -163,12 +194,10 @@ addLayer("e", {
         return player["p"].points
     },
 
-    requires() {
-        return new Decimal(50)
-    },
+    requires:() => player["i"].unl ? new Decimal(1e5) : new Decimal(50),
 
     effect() {
-        return player[this.layer].points.plus(1).sqrt()
+        return player[this.layer].points.plus(1).root(2)
     },
 
     effectDescription:() => "supercharging your point gain by " + format(layers[this.layer].effect()) + "x",
@@ -190,19 +219,31 @@ addLayer("e", {
         return true
     },
 
+    hotkeys: [
+        {
+            key: this.layer,
+            desc: "e: reset your prestige points for electricity",
+            onPress() {
+                if (player[this.layer]) {
+                    doReset(this.layer)
+                }
+            }
+        }
+    ],
+
     milestones: {
         0: {
             requirementDesc:() => "5 electricity",
             effectDesc:() => "You keep prestige upgrades on reset",
             done() {
-                return player[this.layer].best.gte(20)
+                return player[this.layer].best.gte(5)
             }
         },
         1: {
             requirementDesc:() => "20 electricity",
             effectDesc:() => "You gain 100% of prestige point gain per second",
             done() {
-                return player[this.layer].total.gte(20)
+                return player[this.layer].best.gte(20)
             }
         }
     },
@@ -310,6 +351,8 @@ addLayer("e", {
         }
     },
 
+    incr_order: ["i"],
+
     branches: [
         ["p", 1]
     ],
@@ -317,17 +360,140 @@ addLayer("e", {
     tabFormat: ["main-display",
         ["prestige-button", function(){return "Reset for "}],
         ["display-text",
-            function() {return 'You have ' + format(player.p.points) + ' prestige points'},
+            function() {return 'You have ' + format(player["p"].points) + ' prestige points'},
             {"color": "white", "font-size": "15px"}],
         "milestones",
         "blank",
         ["display-text",
-            function() {return 'Your electricity is giving you ' + format(player[this.layer].cells, 0) + ' power cells'},
+            function() {return 'Your electricity is giving you ' + format(player["e"].cells, 0) + ' power cells'},
             {"color": "white", "font-size": "17px"}],
         ["display-text",
             function() {return 'Each building bought decreases the effectiveness of the others!'},
             {"color": "white", "font-size": "17px"}],
         "blank",
         "buyables"
+    ],
+})
+
+addLayer("i", {
+    startData() {
+        return {
+            unl: false,
+            points: new Decimal(0),
+            total: new Decimal(0),
+            best: new Decimal(0),
+            order: 0,
+        }
+    },
+
+    color:() => "#BF2626",
+    resource: "infusions",
+    row: 1,
+
+    baseResource: "prestige points",
+    baseAmount() {
+        return player["p"].points
+    },
+
+    requires:() => player["e"].unl ? new Decimal(1e5) : new Decimal(50),
+
+    type: "static",
+    exponent: 1.25,
+    base: 2,
+
+    gainMult() {
+        mult = new Decimal(1)
+        return mult
+    },
+
+    gainExp() {
+        exp = new Decimal(1)
+        return exp
+    },
+
+    canBuyMax:() => player["i"].milestones.includes("1"),
+
+    layerShown() {
+        return true
+    },
+
+    effect() {
+        return player[this.layer].points.plus(1).pow(1.5)
+    },
+
+    effectDescription:() => "increasing your prestige point gain by " + format(layers[this.layer].effect()) + "x",
+
+    hotkeys: [
+        {
+            key: this.layer,
+            desc: "i: reset your prestige points for infusions",
+            onPress() {
+                if (player[this.layer]) {
+                    doReset(this.layer)
+                }
+            }
+        }
+    ],
+
+    milestones: {
+        0: {
+            requirementDesc:() => "2 infusions",
+            effectDesc:() => "You keep prestige upgrades on reset",
+            done() {
+                return player[this.layer].best.gte(2)
+            }
+        },
+        1: {
+            requirementDesc:() => "5 infusions",
+            effectDesc:() => "You can buy max infusions",
+            done() {
+                return player[this.layer].best.gte(5)
+            }
+        }
+    },
+
+    upgrades: {
+        rows: 1,
+        cols: 2,
+        11: {
+            desc:() => "Unlock two new Prestige Upgrades.",
+            cost:() => new Decimal(2),
+            unl() {
+                return player[this.layer].unl
+            },
+        },
+        12: {
+            desc:() => "Your infusions boost your point gain.",
+            cost:() => new Decimal(5),
+            unl() {
+                return player[this.layer].upgrades.includes(11)
+            },
+            effect() {
+                let ret = player[this.layer].points.add(1)
+                return ret
+            },
+            effectDisplay(fx) {
+                return format(fx) + "x"
+            },
+        },
+    },
+
+    update(diff) {
+    },
+
+    incr_order: ["e"],
+
+    branches: [
+        ["p", 1]
+    ],
+
+    tabFormat: ["main-display",
+        ["prestige-button", function(){return "Reset for "}],
+        ["display-text",
+            function() {return 'You have ' + format(player["p"].points) + ' prestige points'},
+            {"color": "white", "font-size": "15px"}],
+        "milestones",
+        "blank",
+        "upgrades"
     ],
 })

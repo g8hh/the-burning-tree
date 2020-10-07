@@ -8,7 +8,7 @@
 			offlineLimit: 1  // In hours
 		}
 	</script>
-	<title>The Modding Tree</title>
+	<title>Uptake Tree</title>
 	<link rel="stylesheet" type="text/css" href="style.css" />
 	<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
@@ -153,6 +153,7 @@
 			</table><table>
 				<td v-if="player.tab=='tree'&&(player['p'].unl||player['p'].unl)" class="left"><br><br><img class="remove" src="remove.png" onclick="resetRow(1)"></img></td>
 				<td><layer-node layer='e' abb='E'></layer-node></td>
+				<td><layer-node layer='i' abb='I'></layer-node></td>
 			</table><table>
 				<td><button class="treeNode hidden"></button></td>
 			</table>

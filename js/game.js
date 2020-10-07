@@ -23,7 +23,7 @@ function startPlayerBase() {
 		timePlayed: 0,
 		keepGoing: false,
 		hasNaN: false,
-		points: new Decimal(0),
+		points: new Decimal(10),
 	}
 }
 
@@ -42,14 +42,17 @@ function getStartPlayer() {
 
 function getPointGen() {
 	let gain = new Decimal(1)
-	if (player["p"].upgrades.includes(11)) {
-		gain = gain.mul(layers["p"].upgrades[11].effect())
+	if (hasUpg("p",12)) {
+		gain = gain.mul(layers["p"].upgrades[12].effect())
 	}
-	if (player["p"].upgrades.includes(21)) {
-		gain = gain.mul(layers["p"].upgrades[21].effect())
+	if (hasUpg("p",14)) {
+		gain = gain.mul(layers["p"].upgrades[14].effect())
 	}
 	gain = gain.mul(layers["e"].effect())
 	gain = gain.mul(tmp.buyables["e"][11].effect)
+	if (hasUpg("i",21)) {
+		gain = gain.mul(layers["i"].upgrades[12].effect())
+	}
 	return gain
 }
 
@@ -210,7 +213,7 @@ function doReset(layer, force=false) {
 	}
 
 	prevOnReset = {...player} //Deep Copy
-	player.points = new Decimal(0)
+	player.points = (row == 0 ? new Decimal(0) : new Decimal(10))
 
 	for (let x = row; x >= 0; x--) rowReset(x, layer)
 	prevOnReset = undefined
@@ -307,7 +310,7 @@ function resetRow(row) {
 		player[layers[layer]].unl = false
 		if (player[layers[layer]].order) player[layers[layer]].order = 0
 	}
-	player.points = new Decimal(0)
+	player.points = new Decimal(10)
 	updateTemp();
 	resizeCanvas();
 }
