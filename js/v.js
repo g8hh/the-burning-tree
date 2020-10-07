@@ -162,7 +162,7 @@ function loadVue() {
 	Vue.component('upgrade', {
 		props: ['layer', 'data'],
 		template: `
-		<div v-if="layers[layer].challs">
+		<div v-if="layers[layer].upgrades">
 			<button v-if="tmp.upgrades[layer][data].unl" v-on:click="buyUpg(layer, data)" v-bind:class="{ [layer]: true, upg: true, bought: player[layer].upgrades.includes(data), locked: (!(canAffordUpg(layer, data))&&!player[layer].upgrades.includes(data)), can: (canAffordUpg(layer, data)&&!player[layer].upgrades.includes(data))}" v-bind:style="{'background-color': tmp.layerColor[layer]}">
 				<span v-if= "tmp.upgrades[layer][data].title"><h3>{{tmp.upgrades[layer][data].title}}</h3><br></span>
 				{{ tmp.upgrades[layer][data].desc }}

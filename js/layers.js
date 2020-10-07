@@ -58,7 +58,9 @@ addLayer("f", {
         11: {
             desc:() => "You gain 1 ember per second.",
             cost:() => new Decimal(1),
-            unl:() => player[this.layer].unl
+            unl() {
+                return player[this.layer].unl
+            },
         },
         12: {
             desc:() => "Your ember gain is boosted by your unspent flames.",
@@ -67,7 +69,7 @@ addLayer("f", {
                 return hasUpg(this.layer, 11)
             },
             effect() {
-                return player[this.layer].points.add(1).sqrt()
+                return player[this.layer].points.add(2).sqrt().pow(hasUpg(this.layer, 23) ? layers["f"].upgrades[23].effect().div(100).plus(1) : 1)
             },
             effectDisplay(fx) {
                 return format(fx) + "x"
@@ -107,17 +109,29 @@ addLayer("f", {
             },
         },
         22: {
-            desc:() => "Unimplemented",
-            cost:() => new Decimal(0),
+            desc:() => "Your ember gain is boosted by bought flame upgrades.",
+            cost:() => new Decimal(50),
             unl() {
-                return false
+                return hasUpg("c", 11)
+            },
+            effect() {
+                return player[this.layer].upgrades ? new Decimal(player[this.layer].upgrades.length).sqrt() : new Decimal(1)
+            },
+            effectDisplay(fx) {
+                return format(fx) + "x"
             },
         },
         23: {
-            desc:() => "Unimplemented",
-            cost:() => new Decimal(0),
+            desc:() => "The second flame upgrade is stronger based on your flames.",
+            cost:() => new Decimal(250),
             unl() {
-                return false
+                return hasUpg(this.layer, 22)
+            },
+            effect() {
+                return player[this.layer].points.plus(1).log(10).plus(1).root(16)
+            },
+            effectDisplay(fx) {
+                return format(fx.sub(1)) + "% stronger"
             },
         },
         24: {
@@ -204,10 +218,12 @@ addLayer("e", {
     },
 
     effect() {
-        return player[this.layer].points.plus(1).root(2)
+        return player[this.layer].points.add(1).root(2)
     },
 
-    effectDescription:() => "multiplying your ember gain by " + format(layers[this.layer].effect()) + "x",
+    effectDescription() {
+        return "multiplying your ember gain by " + format(layers[this.layer].effect()) + "x"
+    },
 
     type: "normal",
     exponent: "0.5",
@@ -267,11 +283,11 @@ addLayer("e", {
         11: {
             title:() => "Building 1",
             cost(x) {
-                return new Decimal(1.5).pow(x.plus(1)).floor()
+                return new Decimal(1.5).pow(x.add(1)).floor()
             },
             effect(x) {
                 let divisor = player[this.layer].buyables[12].add(player[this.layer].buyables[13]).div(4).add(1)
-                return x.div(divisor).add(1)
+                return x.div(divisor).add(1).sqrt().pow(2.25)
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
@@ -294,11 +310,11 @@ addLayer("e", {
         12: {
             title:() => "Building 2",
             cost(x) {
-                return new Decimal(1.5).pow(x.plus(1)).floor()
+                return new Decimal(1.5).pow(x.add(1)).floor()
             },
             effect(x) {
                 let divisor = player[this.layer].buyables[11].add(player[this.layer].buyables[13]).div(4).add(1)
-                return x.div(divisor).add(1).sqrt().pow(1.5)
+                return x.div(divisor).add(1).sqrt().pow(1.75)
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
@@ -321,11 +337,11 @@ addLayer("e", {
         13: {
             title:() => "Building 3",
             cost(x) {
-                return new Decimal(1.5).pow(x.plus(1)).floor()
+                return new Decimal(1.5).pow(x.add(1)).floor()
             },
             effect(x) {
                 let divisor = player[this.layer].buyables[11].add(player[this.layer].buyables[12]).div(4).add(1)
-                return x.div(divisor).add(1).sqrt().pow(1.2)
+                return x.div(divisor).add(1).sqrt().pow(1.5)
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
@@ -348,8 +364,8 @@ addLayer("e", {
     },
 
     update(diff) {
-        if (player[this.layer].totalcells.lt(player[this.layer].points.root(2).floor())) {
-            amount = player[this.layer].points.root(2).floor().sub(player[this.layer].totalcells)
+        if (player[this.layer].totalcells.lt(player[this.layer].points.root(1.75).floor())) {
+            amount = player[this.layer].points.root(1.75).floor().sub(player[this.layer].totalcells)
             player[this.layer].totalcells = player[this.layer].totalcells.add(amount)
             player[this.layer].cells = player[this.layer].cells.add(amount)
             if (player[this.layer].cells.gte(player[this.layer].bestcells)) {
@@ -424,17 +440,21 @@ addLayer("c", {
         return exp
     },
 
-    canBuyMax:() => hasMilestone("c", "1"),
+    canBuyMax() {
+        return hasMilestone("c", "1")
+    },
 
     layerShown() {
         return true
     },
 
     effect() {
-        return player[this.layer].points.plus(1).pow(1.5)
+        return player[this.layer].points.add(1).pow(1.5)
     },
 
-    effectDescription:() => "fueling your flame gain by " + format(layers[this.layer].effect()) + "x",
+    effectDescription() {
+        return "fueling your flame gain by " + format(layers[this.layer].effect()) + "x"
+    },
 
     hotkeys: [
         {
@@ -451,7 +471,7 @@ addLayer("c", {
     milestones: {
         0: {
             requirementDesc:() => "2 coal",
-            effectDesc:() => "You keep flame on reset",
+            effectDesc:() => "You keep flame upgrades on reset",
             done() {
                 return player[this.layer].best.gte(2)
             }
@@ -482,7 +502,7 @@ addLayer("c", {
                 return hasUpg(this.layer, 11)
             },
             effect() {
-                let ret = player[this.layer].points.add(1)
+                let ret = player[this.layer].points.add(2)
                 return ret
             },
             effectDisplay(fx) {
