@@ -16,20 +16,17 @@ function showPointGen(){
 
 // Calculate points/sec!
 function getPointGen() {
-	if(!hasUpg("c", 11))
-		return new Decimal(0)
-
 	let gain = new Decimal(1)
-	if (hasUpg("p",12)) {
-		gain = gain.mul(layers["p"].upgrades[12].effect())
+	if (hasUpg("f",12)) {
+		gain = gain.mul(upgEffect("f",12))
 	}
-	if (hasUpg("p",14)) {
-		gain = gain.mul(layers["p"].upgrades[14].effect())
+	if (hasUpg("f",14)) {
+		gain = gain.mul(upgEffect("f",14))
 	}
 	gain = gain.mul(layers["e"].effect())
-	gain = gain.mul(tmp.buyables["e"][11].effect)
-	if (hasUpg("i",21)) {
-		gain = gain.mul(layers["i"].upgrades[12].effect())
+	gain = gain.mul(buyableEffect("e",11))
+	if (hasUpg("c",12)) {
+		gain = gain.mul(upgEffect("c",12))
 	}
 	return gain
 }

@@ -1,4 +1,4 @@
-addLayer("p", {
+addLayer("f", {
     startData() {
         return {
             unl: false,
@@ -8,11 +8,11 @@ addLayer("p", {
         }
     },
 
-    color:() => "#AACCFF",
-    resource: "prestige points",
+    color:() => "#BF2F00",
+    resource: "flames",
     row: 0,
 
-    baseResource: "points",
+    baseResource: "embers",
     baseAmount() {
         return player.points
     },
@@ -25,9 +25,9 @@ addLayer("p", {
     gainMult() {
         mult = new Decimal(1)
         if (hasUpg(this.layer, 13)) mult = mult.mul(2)
-        if (hasUpg(this.layer, 21)) mult = mult.mul(this.upgrades[21].effect())
-        mult = mult.mul(tmp.buyables["e"][12].effect)
-        mult = mult.mul(layers["i"].effect())
+        if (hasUpg(this.layer, 21)) mult = mult.mul(upgEffect(this.layer, 21))
+        mult = mult.mul(buyableEffect("e",12))
+        mult = mult.mul(layers["c"].effect())
         return mult
     },
 
@@ -43,7 +43,7 @@ addLayer("p", {
     hotkeys: [
         {
             key: this.layer,
-            desc: "p: reset your points for prestige points",
+            desc: "f: reset your embers for flames",
             onPress() {
                 if (player[this.layer]) {
                     doReset(this.layer)
@@ -56,56 +56,51 @@ addLayer("p", {
         rows: 2,
         cols: 4,
         11: {
-            desc:() => "You gain 1 point per second.",
+            desc:() => "You gain 1 ember per second.",
             cost:() => new Decimal(1),
-            unl() {
-                return player[this.layer].unl
-            },
+            unl:() => player[this.layer].unl
         },
         12: {
-            desc:() => "Your point gain is boosted by your unspent prestige points.",
+            desc:() => "Your ember gain is boosted by your unspent flames.",
             cost:() => new Decimal(1),
             unl() {
                 return hasUpg(this.layer, 11)
             },
             effect() {
-                let ret = player[this.layer].points.add(1).sqrt()
-                return ret
+                return player[this.layer].points.add(1).sqrt()
             },
             effectDisplay(fx) {
                 return format(fx) + "x"
             },
         },
         13: {
-            desc:() => "Your prestige point gain is doubled.",
+            desc:() => "Your flame gain is doubled.",
             cost:() => new Decimal(5),
             unl() {
                 return hasUpg(this.layer, 12)
             },
         },
         14: {
-            desc:() => "Your point gain is boosted by your points.",
+            desc:() => "Your ember gain is boosted by your embers.",
             cost:() => new Decimal(10),
             unl() {
                 return hasUpg(this.layer, 13)
             },
             effect() {
-                let ret = player.points.add(1).log(10).add(1)
-                return ret
+                return player.points.add(1).log(10).add(1)
             },
             effectDisplay(fx) {
                 return format(fx) + "x"
             },
         },
         21: {
-            desc:() => "Your prestige point gain is boosted by your points.",
+            desc:() => "Your flame gain is boosted by your embers.",
             cost:() => new Decimal(15),
             unl() {
                 return hasUpg(this.layer, 14)
             },
             effect() {
-                let ret = player.points.add(1).log(100).add(1)
-                return ret
+                return player.points.add(1).log(100).add(1)
             },
             effectDisplay(fx) {
                 return format(fx) + "x"
@@ -113,25 +108,31 @@ addLayer("p", {
         },
         22: {
             desc:() => "Unimplemented",
-            cost:() => NaN,
-            unl:() => false,
+            cost:() => new Decimal(0),
+            unl() {
+                return false
+            },
         },
         23: {
             desc:() => "Unimplemented",
-            cost:() => NaN,
-            unl:() => false,
+            cost:() => new Decimal(0),
+            unl() {
+                return false
+            },
         },
         24: {
             desc:() => "Unimplemented",
-            cost:() => NaN,
-            unl:() => false,
+            cost:() => new Decimal(0),
+            unl() {
+                return false
+            },
         },
     },
 
     update(diff) {
         if (hasUpg(this.layer, 11)) player.points = player.points.add(tmp.pointGen.mul(diff)).max(0)
-        if (player["e"].milestones.includes("1")) {
-            generatePoints("p", diff)
+        if (hasMilestone("e", "1")) {
+            generatePoints("f", diff)
         }
     },
 
@@ -143,8 +144,8 @@ addLayer("p", {
             } else {
                 fullLayerReset(this.layer)
             }
-        } else if (resettingLayer == "i") {
-            if (player["i"].milestones.includes("0")) {
+        } else if (resettingLayer == "c") {
+            if (player["c"].milestones.includes("0")) {
                 player[this.layer].points = new Decimal(0)
                 player[this.layer].total = new Decimal(0)
             } else {
@@ -158,7 +159,7 @@ addLayer("p", {
     tabFormat: ["main-display",
         ["prestige-button", function(){return "Reset for "}],
         ["display-text",
-            function() {return 'You have ' + format(player.points) + ' points'},
+            function() {return 'You have ' + format(player.points) + ' embers'},
             {"color": "white", "font-size": "15px"}],
         "blank",
         "upgrades"
@@ -189,18 +190,24 @@ addLayer("e", {
         player[this.layer].bestcells = new Decimal(player[this.layer].bestcells)
     },
 
-    baseResource: "prestige points",
+    baseResource: "flames",
     baseAmount() {
-        return player["p"].points
+        return player["f"].points
     },
 
-    requires:() => player["i"].unl ? new Decimal(1e5) : new Decimal(50),
+    requires() {
+        if (player[this.layer].order >= 1) {
+            return new Decimal(1e5)
+        } else {
+            return new Decimal(50)
+        }
+    },
 
     effect() {
         return player[this.layer].points.plus(1).root(2)
     },
 
-    effectDescription:() => "supercharging your point gain by " + format(layers[this.layer].effect()) + "x",
+    effectDescription:() => "multiplying your ember gain by " + format(layers[this.layer].effect()) + "x",
 
     type: "normal",
     exponent: "0.5",
@@ -234,14 +241,14 @@ addLayer("e", {
     milestones: {
         0: {
             requirementDesc:() => "5 electricity",
-            effectDesc:() => "You keep prestige upgrades on reset",
+            effectDesc:() => "You keep flame upgrades on reset",
             done() {
                 return player[this.layer].best.gte(5)
             }
         },
         1: {
             requirementDesc:() => "20 electricity",
-            effectDesc:() => "You gain 100% of prestige point gain per second",
+            effectDesc:() => "You gain 100% of flame gain per second",
             done() {
                 return player[this.layer].best.gte(20)
             }
@@ -268,13 +275,13 @@ addLayer("e", {
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
-                return "\nIncreases point gain.\n\nCurrently: " + format(data.effect)
+                return "\nIncreases ember gain.\n\nCurrently: " + format(data.effect)
                     + "x\n\nCost: " + format(data.cost, 0) + " power cells\n\nOwned: " + format(player[this.layer].buyables[this.id],0)
             },
             unl() {
                 return player[this.layer].unl
             },
-            canAfford() {
+            canAfford() { 
                 return player[this.layer].cells.gte(tmp.buyables[this.layer][this.id].cost)
             },
             buy() {
@@ -295,7 +302,7 @@ addLayer("e", {
             },
             display() {
                 let data = tmp.buyables[this.layer][this.id]
-                return "\nIncreases prestige point gain.\n\nCurrently: " + format(data.effect)
+                return "\nIncreases flame gain.\n\nCurrently: " + format(data.effect)
                     + "x\n\nCost: " + format(data.cost, 0) + " power cells\n\nOwned: " + format(player[this.layer].buyables[this.id],0)
             },
             unl() {
@@ -351,16 +358,16 @@ addLayer("e", {
         }
     },
 
-    incr_order: ["i"],
+    incr_order: ["c"],
 
     branches: [
-        ["p", 1]
+        ["f", 1]
     ],
 
     tabFormat: ["main-display",
         ["prestige-button", function(){return "Reset for "}],
         ["display-text",
-            function() {return 'You have ' + format(player["p"].points) + ' prestige points'},
+            function() {return 'You have ' + format(player["f"].points) + ' flames'},
             {"color": "white", "font-size": "15px"}],
         "milestones",
         "blank",
@@ -375,7 +382,7 @@ addLayer("e", {
     ],
 })
 
-addLayer("i", {
+addLayer("c", {
     startData() {
         return {
             unl: false,
@@ -386,16 +393,22 @@ addLayer("i", {
         }
     },
 
-    color:() => "#BF2626",
-    resource: "infusions",
+    color:() => "#5B5B5B",
+    resource: "coal",
     row: 1,
 
-    baseResource: "prestige points",
+    baseResource: "flames",
     baseAmount() {
-        return player["p"].points
+        return player["f"].points
     },
 
-    requires:() => player["e"].unl ? new Decimal(1e5) : new Decimal(50),
+    requires() {
+        if (player[this.layer].order >= 1) {
+            return new Decimal(1e5)
+        } else {
+            return new Decimal(50)
+        }
+    },
 
     type: "static",
     exponent: 1.25,
@@ -411,7 +424,7 @@ addLayer("i", {
         return exp
     },
 
-    canBuyMax:() => player["i"].milestones.includes("1"),
+    canBuyMax:() => hasMilestone("c", "1"),
 
     layerShown() {
         return true
@@ -421,12 +434,12 @@ addLayer("i", {
         return player[this.layer].points.plus(1).pow(1.5)
     },
 
-    effectDescription:() => "increasing your prestige point gain by " + format(layers[this.layer].effect()) + "x",
+    effectDescription:() => "fueling your flame gain by " + format(layers[this.layer].effect()) + "x",
 
     hotkeys: [
         {
             key: this.layer,
-            desc: "i: reset your prestige points for infusions",
+            desc: "i: reset your flames for coal",
             onPress() {
                 if (player[this.layer]) {
                     doReset(this.layer)
@@ -437,15 +450,15 @@ addLayer("i", {
 
     milestones: {
         0: {
-            requirementDesc:() => "2 infusions",
-            effectDesc:() => "You keep prestige upgrades on reset",
+            requirementDesc:() => "2 coal",
+            effectDesc:() => "You keep flame on reset",
             done() {
                 return player[this.layer].best.gte(2)
             }
         },
         1: {
-            requirementDesc:() => "5 infusions",
-            effectDesc:() => "You can buy max infusions",
+            requirementDesc:() => "5 coal",
+            effectDesc:() => "You can buy max coal",
             done() {
                 return player[this.layer].best.gte(5)
             }
@@ -456,17 +469,17 @@ addLayer("i", {
         rows: 1,
         cols: 2,
         11: {
-            desc:() => "Unlock two new Prestige Upgrades.",
+            desc:() => "Unlock two new Flame Upgrades.",
             cost:() => new Decimal(2),
             unl() {
                 return player[this.layer].unl
             },
         },
         12: {
-            desc:() => "Your infusions boost your point gain.",
+            desc:() => "Your coal boosts your ember gain.",
             cost:() => new Decimal(5),
             unl() {
-                return player[this.layer].upgrades.includes(11)
+                return hasUpg(this.layer, 11)
             },
             effect() {
                 let ret = player[this.layer].points.add(1)
@@ -484,13 +497,13 @@ addLayer("i", {
     incr_order: ["e"],
 
     branches: [
-        ["p", 1]
+        ["f", 1]
     ],
 
     tabFormat: ["main-display",
         ["prestige-button", function(){return "Reset for "}],
         ["display-text",
-            function() {return 'You have ' + format(player["p"].points) + ' prestige points'},
+            function() {return 'You have ' + format(player["f"].points) + ' flames'},
             {"color": "white", "font-size": "15px"}],
         "milestones",
         "blank",

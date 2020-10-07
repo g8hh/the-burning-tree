@@ -2,13 +2,13 @@
 <head>
 	<script>
 		const modInfo = {
-			name: "Uptake Tree",
-			id: "uptake-tree",
-			pointsName: "points",
+			name: "The Burning Tree",
+			id: "uptake.burning-tree",
+			pointsName: "embers",
 			offlineLimit: 1  // In hours
 		}
 	</script>
-	<title>Uptake Tree</title>
+	<title>The Burning Tree</title>
 	<link rel="stylesheet" type="text/css" href="style.css" />
 	<link href="https://fonts.googleapis.com/css?family=Inconsolata" rel="stylesheet">
 	<script src="https://cdn.jsdelivr.net/npm/vue@2.6.12"></script>
@@ -134,13 +134,13 @@
 			<br><br><br><br>
 			<!-- *************************** Modify the tree in the table below! *************************** -->
 			<table>
-				<td><layer-node layer='p' abb='P'></layer-node></td>
+				<td><layer-node layer='f' abb='F'></layer-node></td>
 			</table><table>
 				<td><button class="treeNode hidden"></button></td>
 			</table><table>
-				<td v-if="player.tab=='tree'&&(player['p'].unl||player['p'].unl)" class="left"><br><br><img class="remove" src="remove.png" onclick="resetRow(1)"></img></td>
+				<td v-if="player.tab=='tree'&&(player['f'].unl||player['f'].unl)" class="left"><br><br><img class="remove" src="remove.png" onclick="resetRow(1)"></img></td>
 				<td><layer-node layer='e' abb='E'></layer-node></td>
-				<td><layer-node layer='i' abb='I'></layer-node></td>
+				<td><layer-node layer='c' abb='C'></layer-node></td>
 			</table><table>
 				<td><button class="treeNode hidden"></button></td>
 			</table>
