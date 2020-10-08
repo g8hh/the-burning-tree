@@ -5,8 +5,8 @@ var NaNalert = false;
 var gameEnded = false;
 
 let VERSION = {
-	num: "1.3.4",
-	name: "Tabception... ception!"
+	num: "0.0.1",
+	name: "Initial release"
 }
 
 // Determines if it should show points/sec
