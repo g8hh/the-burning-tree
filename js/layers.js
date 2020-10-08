@@ -256,7 +256,7 @@ addLayer("e", {
 
     milestones: {
         0: {
-            requirementDesc:() => "5 electricity",
+            requirementDesc:() => "3 electricity",
             effectDesc:() => "You keep flame upgrades on reset",
             done() {
                 return player[this.layer].best.gte(5)
