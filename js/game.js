@@ -5,7 +5,7 @@ var NaNalert = false;
 var gameEnded = false;
 
 let VERSION = {
-	num: "1.3",
+	num: "1.3.4",
 	name: "Tabception... ception!"
 }
 
@@ -229,6 +229,7 @@ function doReset(layer, force=false) {
 	for (let x = row; x >= 0; x--) rowReset(x, layer)
 	prevOnReset = undefined
 
+	setupTemp();
 	updateTemp()
 	updateTemp()
 }
@@ -236,26 +237,26 @@ function doReset(layer, force=false) {
 function respecBuyables(layer) {
 	if (!layers[layer].buyables) return
 	if (!layers[layer].buyables.respec) return
-	if (!confirm("Are you sure you want to respec? This will force you to do a \"" + layer + "\" reset as well!")) return
+	if (!confirm("Are you sure you want to respec? This will force you to do a \"" + (layers[layer].name ? layers[layer].name : layer) + "\" reset as well!")) return
 	layers[layer].buyables.respec()
 }
 
 function canAffordUpg(layer, id) {
-	upg = layers[layer].upgrades[id]
-	cost = tmp.upgrades[layer][id].cost
+	let upg = layers[layer].upgrades[id]
+	let cost = tmp.upgrades[layer][id].cost
 	return canAffordPurchase(layer, upg, cost) 
 }
 
 function hasUpg(layer, id){
-	return (player[layer].upgrades.includes(toNumber(id)))
+	return (player[layer].upgrades.includes(toNumber(id)) || player[layer].upgrades.includes(id.toString()))
 }
 
 function hasMilestone(layer, id){
-	return (player[layer].milestones.includes(toNumber(id)) || player[layer].milestones.includes(id))
+	return (player[layer].milestones.includes(toNumber(id)) || player[layer].milestones.includes(id.toString()))
 }
 
 function hasChall(layer, id){
-	return (player[layer].challs.includes(toNumber(id)))
+	return (player[layer].challs.includes(toNumber(id)) || player[layer].challs.includes(id.toString()))
 }
 
 function upgEffect(layer, id){
@@ -290,8 +291,8 @@ function buyUpg(layer, id) {
 	if (!player[layer].unl) return
 	if (!layers[layer].upgrades[id].unl()) return
 	if (player[layer].upgrades.includes(id)) return
-	upg = layers[layer].upgrades[id]
-	cost = tmp.upgrades[layer][id].cost
+	let upg = layers[layer].upgrades[id]
+	let cost = tmp.upgrades[layer][id].cost
 
 	if (upg.currencyInternalName){
 		let name = upg.currencyInternalName
@@ -339,14 +340,17 @@ function resetRow(row) {
 }
 
 function startChall(layer, x) {
+	let enter = false
 	if (!player[layer].unl) return
 	if (player[layer].active == x) {
 		completeChall(layer, x)
 		delete player[layer].active
 	} else {
-		player[layer].active = x
-	}
+		enter = true
+	}	
 	doReset(layer, true)
+	if(enter) player[layer].active = x
+
 	updateChallTemp(layer)
 }
 
