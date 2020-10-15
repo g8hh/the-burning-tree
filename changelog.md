@@ -1,5 +1,8 @@
 # The Burning Tree Changelog:
 
+## v0.0.2 10/15/20
+- Implements the coal layer, balanced to around 14 coal.
+
 ## v0.0.1 10/15/20
 - Complete initial release, only the prestige point layer implemented.
 

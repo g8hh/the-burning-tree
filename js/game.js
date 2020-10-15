@@ -30,8 +30,11 @@ function canGenPoints(){
 // Calculate points/sec!
 function getPointGen() {
 	if (canGenPoints()) {
-		var pointGen = new Decimal(4)
+		var pointGen = new Decimal(8)
 		pointGen = pointGen.mul(getFlameStrength())
+		if (hasUpgrade("c", 14)) {
+			pointGen = pointGen.mul(upgradeEffect("c", 14))
+		}
 		return pointGen
 	} else return new Decimal(0)
 }
@@ -39,15 +42,24 @@ function getPointGen() {
 // Get flame strength
 function getFlameStrength() {
 	var strength = player.flame.strength
+	if (hasUpgrade("c", 13) && strength.lte(1)) {
+		strength = strength.sqrt()
+	}
 	if (hasUpgrade("p", 12)) {
 		strength = strength.mul(upgradeEffect("p", 12))
+	}
+	if (hasUpgrade("p", 23)) {
+		strength = strength.mul(upgradeEffect("p", 23))
+	}
+	if (player["c"].unlocked) {
+		strength = strength.mul(layers["c"].effect())
 	}
 	return strength
 }
 
 // Get flame depletion
 function getFlameDepletion() {
-	var depletion = new Decimal(0.2)
+	var depletion = new Decimal(0.4)
 	if (hasUpgrade("p", 11)) {
 		depletion = depletion.div(2)
 	}
