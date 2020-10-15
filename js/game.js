@@ -6,7 +6,7 @@ var gameEnded = false;
 
 let modInfo = {
 	name: "The Burning Tree",
-	id: "uptake-burningtree",
+	id: "uptake-theburningtree",
 	pointsName: "embers",
 	discordName: "",
 	discordLink: "",
