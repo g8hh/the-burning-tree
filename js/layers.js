@@ -168,7 +168,9 @@ addLayer("c", {
 
     effect() {
         var effect = player[this.layer].points.plus(1).pow(0.75)
-        effect = effect.mul(upgradeEffect(this.layer, 12))
+        if (hasUpgrade(this.layer, 12)) {
+            effect = effect.mul(upgradeEffect(this.layer, 12))
+        }
         return effect
     },
 
