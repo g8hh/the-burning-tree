@@ -47,7 +47,7 @@ function getFlameStrength() {
 
 // Get flame depletion
 function getFlameDepletion() {
-	var depletion = new Decimal(0.1)
+	var depletion = new Decimal(0.2)
 	if (hasUpgrade("p", 11)) {
 		depletion = depletion.div(2)
 	}
