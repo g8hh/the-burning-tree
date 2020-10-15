@@ -79,8 +79,12 @@ function startPlayerBase() {
 		keepGoing: false,
 		hasNaN: false,
 		hideChallenges: false,
-		points: new Decimal(10),
+		points: new Decimal(0),
 		subtabs: {},
+		flame: {
+			strength: new Decimal(1),
+			startingStrength: new Decimal(1),
+		},
 	}
 }
 

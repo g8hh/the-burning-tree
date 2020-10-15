@@ -1,3 +1,8 @@
+# The Burning Tree Changelog:
+
+## v0.0.1 10/15/20
+- Complete initial release, only the prestige point layer implemented.
+
 # The Modding Tree changelog:
 
 ## v2.0 10/15/20
