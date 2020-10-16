@@ -469,7 +469,7 @@ addLayer("e", {
     bars: {
         flameBoost: {
             direction: RIGHT,
-            width: 600,
+            width: 300,
             height: 50,
             progress() {
                 return player[this.layer].allocation[0] / 100
@@ -489,7 +489,7 @@ addLayer("e", {
         },
         ashBoost: {
             direction: RIGHT,
-            width: 600,
+            width: 300,
             height: 50,
             progress() {
                 return player[this.layer].allocation[1] / 100
@@ -509,7 +509,7 @@ addLayer("e", {
         },
         emberBoost: {
             direction: RIGHT,
-            width: 600,
+            width: 300,
             height: 50,
             progress() {
                 return player[this.layer].allocation[2] / 100
