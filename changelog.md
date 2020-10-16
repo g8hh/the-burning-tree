@@ -1,5 +1,10 @@
 # The Burning Tree Changelog:
 
+## v0.1.1 10/15/20
+- Fixed coal reset
+- Added milestone for new prestige upgrades
+- Updated to The Modding Tree version 2.0.1
+
 ## v0.1.0 10/15/20
 - Prestige points are now ashes
 - Ash reset automator now keeps toggle on coal reset

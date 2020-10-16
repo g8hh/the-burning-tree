@@ -45,9 +45,9 @@ addLayer("a", {
 
     hotkeys: [
         {
-            key: "a",
+            key: this.layer,
             desc: "a: reset your embers for ashes",
-            onPress(){if (player["a"].unlocked) doReset("a")}
+            onPress(){if (player[this.layer].unlocked) doReset(this.layer)}
         }
     ],
 
@@ -68,7 +68,7 @@ addLayer("a", {
                 return format(upgradeEffect(this.layer, this.id)) + "x"
             },
             unlocked() {
-                return hasUpgrade("a", 11)
+                return hasUpgrade(this.layer, 11)
             }
         },
         13: {
@@ -81,7 +81,7 @@ addLayer("a", {
                 return format(upgradeEffect(this.layer, this.id)) + "x"
             },
             unlocked() {
-                return hasUpgrade("a", 12) && player["c"].unlocked
+                return hasUpgrade(this.layer, 12) && hasMilestone("c", 0)
             }
         },
         21: {
@@ -94,7 +94,7 @@ addLayer("a", {
                 return format(upgradeEffect(this.layer, this.id)) + "x"
             },
             unlocked() {
-                return hasUpgrade("a", 12)
+                return hasUpgrade(this.layer, 12)
             }
         },
         22: {
@@ -107,7 +107,7 @@ addLayer("a", {
                 return "/" + format(upgradeEffect(this.layer, this.id))
             },
             unlocked() {
-                return hasUpgrade("a", 21)
+                return hasUpgrade(this.layer, 21)
             }
         },
         23: {
@@ -120,7 +120,7 @@ addLayer("a", {
                 return format(upgradeEffect(this.layer, this.id)) + "x"
             },
             unlocked() {
-                return hasUpgrade("a", 22) && player["c"].unlocked
+                return hasUpgrade(this.layer, 22) && hasMilestone("c", 0)
             }
         },
     },
@@ -129,17 +129,17 @@ addLayer("a", {
         if (layers[resettingLayer].row > layers[this.layer].row) {
             var kept = ["unlocked"]
             if (resettingLayer == "c") {
-                if (hasMilestone("c", 1)) {kept.push("upgrades")}
-                if (hasMilestone("c", 2)) {kept.push("auto")}
+                if (hasMilestone("c", 2)) {kept.push("upgrades")}
+                if (hasMilestone("c", 3)) {kept.push("auto")}
             }
-            resetLayerData(this.layer, kept)
+            layerDataReset(this.layer, kept)
         }
     },
 
     automate() {
-        if (player[this.layer].auto && hasMilestone("c", 2)) {
+        if (player[this.layer].auto && hasMilestone("c", 3)) {
             if (player.flame.strength.lt(0.1)) {
-                doReset("a")
+                doReset(this.layer)
             }
         }
     },
@@ -193,7 +193,7 @@ addLayer("c", {
     roundUpCost: true,
 
     canBuyMax() {
-        return hasMilestone(this.layer, 0)
+        return hasMilestone(this.layer, 1)
     },
 
     gainMult() {
@@ -211,9 +211,9 @@ addLayer("c", {
 
     hotkeys: [
         {
-            key: "c",
+            key: this.layer,
             desc: "c: reset your embers for coal",
-            onPress(){if (player["c"].unlocked) doReset("c")}
+            onPress(){if (player[this.layer].unlocked) doReset(this.layer)}
         }
     ],
 
@@ -223,20 +223,27 @@ addLayer("c", {
 
     milestones: {
         0: {
+            requirementDescription: "1 coal",
+            effectDescription: "Unlock a new column of prestige upgrades",
+            done() {
+                return player[this.layer].best.gte(1)
+            }
+        },
+        1: {
             requirementDescription: "3 coal",
             effectDescription: "You can buy max coal",
             done() {
                 return player[this.layer].best.gte(3)
             }
         },
-        1: {
+        2: {
             requirementDescription: "5 coal",
             effectDescription: "You keep ash upgrades on coal reset",
             done() {
                 return player[this.layer].best.gte(5)
             }
         },
-        2: {
+        3: {
             requirementDescription: "10 coal",
             effectDescription: "You can now automatically do an ash reset when your flame strength drops below 10%",
             done() {
