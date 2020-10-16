@@ -326,6 +326,8 @@ a {
 	color: #41f5f5;
 	text-decoration-line: none;
 	cursor: pointer;
+	width: 100%;
+	min-width: 100%;
 	font-family: "Lucida Console", "Courier New", monospace;
 	-webkit-text-stroke-width: 1px;
 	-webkit-text-stroke-color: #02f2f2;
@@ -566,8 +568,4 @@ ul {
 	position: absolute;
 	right: 55px;
 	top: 65px;
-}
-
-button > * {
-	pointer-events:none;
 }
