@@ -4,6 +4,7 @@
 - Added electricity layer
 - Rebalanced things in ash and coal layers
 - Fixed hotkeys
+- Updated to The Modding Tree version 2.0.4
 
 ## v0.1.1 10/15/20
 - Fixed coal reset
