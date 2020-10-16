@@ -10,14 +10,14 @@ let modInfo = {
 	discordName: "",
 	discordLink: "",
 	changelogLink: "https://github.com/thefinaluptake/The-Burning-Tree/blob/master/changelog.md",
-	offlineLimit: 0  // In hours
+	offlineLimit: 1  // In hours
 }
 
 // Set your version in num and name, but leave the tmt values so people know what version it is
 let VERSION = {
 	num: "0.2.0",
 	name: "Electricity Surging",
-	tmtNum: "2.0",
+	tmtNum: "2.0.4",
 	tmtName: "Pinnacle of Achievement Mountain"
 }
 
@@ -80,6 +80,10 @@ function getFlameDepletion() {
 	return depletion
 }
 
+// You can change this if you have things that can be messed up by long tick lengths
+function maxTickLength() {
+	return(500) // Default is 1 hour which is just arbitrarily large
+}
 
 function getResetGain(layer, useType = null) {
 	let type = useType
@@ -299,11 +303,14 @@ function canCompleteChallenge(layer, x)
 {
 	if (x != player[layer].activeChallenge) return
 
-	let challenge = layers[layer].challenges[x]
+	let challenge = tmp[layer].challenges[x]
 
 	if (challenge.currencyInternalName){
 		let name = challenge.currencyInternalName
-		if (challenge.currencyLayer){
+		if (challenge.currencyLocation){
+			return !(challenge.currencyLocation[name].lt(challenge.goal)) 
+		}
+		else if (challenge.currencyLayer){
 			let lr = challenge.currencyLayer
 			return !(player[lr][name].lt(readData(challenge.goal))) 
 		}
@@ -348,6 +355,10 @@ function gameLoop(diff) {
 		player.tab = "gameEnded"
 	}
 	if (player.devSpeed) diff *= player.devSpeed
+
+	let limit = maxTickLength()
+	if(diff > limit)
+		diff = limit
 
 	addTime(diff)
 	
