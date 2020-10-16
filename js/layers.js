@@ -224,7 +224,7 @@ addLayer("c", {
     milestones: {
         0: {
             requirementDescription: "1 coal",
-            effectDescription: "Unlock a new column of prestige upgrades",
+            effectDescription: "Unlock a new column of ash upgrades",
             done() {
                 return player[this.layer].best.gte(1)
             }
