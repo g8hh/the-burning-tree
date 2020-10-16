@@ -1,5 +1,9 @@
 # The Burning Tree Changelog:
 
+## v0.1.0 10/15/20
+- Prestige points are now ashes
+- Ash reset automator now keeps toggle on coal reset
+
 ## v0.0.2 10/15/20
 - Implements the coal layer, balanced to around 14 coal.
 

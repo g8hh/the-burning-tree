@@ -16,8 +16,8 @@ let modInfo = {
 
 // Set your version in num and name, but leave the tmt values so people know what version it is
 let VERSION = {
-	num: "0.0.2",
-	name: "Introduction of Coal",
+	num: "0.1.0",
+	name: "Ashes All Around",
 	tmtNum: "2.0",
 	tmtName: "Pinnacle of Achievement Mountain"
 }
@@ -45,11 +45,11 @@ function getFlameStrength() {
 	if (hasUpgrade("c", 13) && strength.lte(1)) {
 		strength = strength.sqrt()
 	}
-	if (hasUpgrade("p", 12)) {
-		strength = strength.mul(upgradeEffect("p", 12))
+	if (hasUpgrade("a", 12)) {
+		strength = strength.mul(upgradeEffect("a", 12))
 	}
-	if (hasUpgrade("p", 23)) {
-		strength = strength.mul(upgradeEffect("p", 23))
+	if (hasUpgrade("a", 23)) {
+		strength = strength.mul(upgradeEffect("a", 23))
 	}
 	if (player["c"].unlocked) {
 		strength = strength.mul(layers["c"].effect())
@@ -60,11 +60,11 @@ function getFlameStrength() {
 // Get flame depletion
 function getFlameDepletion() {
 	var depletion = new Decimal(0.4)
-	if (hasUpgrade("p", 11)) {
+	if (hasUpgrade("a", 11)) {
 		depletion = depletion.div(2)
 	}
-	if (hasUpgrade("p", 22)) {
-		depletion = depletion.div(upgradeEffect("p", 22))
+	if (hasUpgrade("a", 22)) {
+		depletion = depletion.div(upgradeEffect("a", 22))
 	}
 	return depletion
 }
