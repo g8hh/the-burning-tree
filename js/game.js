@@ -3,7 +3,6 @@ var needCanvasUpdate = true;
 var NaNalert = false;
 var gameEnded = false;
 
-
 let modInfo = {
 	name: "The Burning Tree",
 	id: "uptake-theburningtree",
@@ -11,13 +10,13 @@ let modInfo = {
 	discordName: "",
 	discordLink: "",
 	changelogLink: "https://github.com/thefinaluptake/The-Burning-Tree/blob/master/changelog.md",
-	offlineLimit: 1  // In hours
+	offlineLimit: 0  // In hours
 }
 
 // Set your version in num and name, but leave the tmt values so people know what version it is
 let VERSION = {
-	num: "0.1.0",
-	name: "Ashes All Around",
+	num: "0.2.0",
+	name: "Electricity Surging",
 	tmtNum: "2.0",
 	tmtName: "Pinnacle of Achievement Mountain"
 }
@@ -30,10 +29,19 @@ function canGenPoints(){
 // Calculate points/sec!
 function getPointGen() {
 	if (canGenPoints()) {
-		var pointGen = new Decimal(8)
+		let pointGen = new Decimal(8)
 		pointGen = pointGen.mul(getFlameStrength())
+		if (hasUpgrade("a", 14)) {
+			pointGen = pointGen.mul(upgradeEffect("a", 14))
+		}
+		if (hasUpgrade("a", 24)) {
+			pointGen = pointGen.mul(upgradeEffect("a", 24))
+		}
 		if (hasUpgrade("c", 14)) {
 			pointGen = pointGen.mul(upgradeEffect("c", 14))
+		}
+		if (player["e"].unlocked) {
+			pointGen = pointGen.mul(player["e"].allocatedEffects[2])
 		}
 		return pointGen
 	} else return new Decimal(0)
@@ -41,7 +49,7 @@ function getPointGen() {
 
 // Get flame strength
 function getFlameStrength() {
-	var strength = player.flame.strength
+	let strength = player.flame.strength
 	if (hasUpgrade("c", 13) && strength.lte(1)) {
 		strength = strength.sqrt()
 	}
@@ -52,14 +60,17 @@ function getFlameStrength() {
 		strength = strength.mul(upgradeEffect("a", 23))
 	}
 	if (player["c"].unlocked) {
-		strength = strength.mul(layers["c"].effect())
+		strength = strength.mul(tmp["c"].effect)
+	}
+	if (player["e"].unlocked) {
+		strength = strength.mul(player["e"].allocatedEffects[0])
 	}
 	return strength
 }
 
 // Get flame depletion
 function getFlameDepletion() {
-	var depletion = new Decimal(0.4)
+	let depletion = new Decimal(0.4)
 	if (hasUpgrade("a", 11)) {
 		depletion = depletion.div(2)
 	}
@@ -341,7 +352,7 @@ function gameLoop(diff) {
 	addTime(diff)
 	
 	if (player.flame.strength.gt(0)) {
-		player.flame.strength = player.flame.strength.sub(getFlameDepletion().times(diff)).max(0)
+		player.flame.strength = player.flame.strength.sub(getFlameDepletion().mul(diff)).max(0)
 	}
 
 	player.points = player.points.add(tmp.pointGen.times(diff)).max(0)

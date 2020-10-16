@@ -1,5 +1,10 @@
 # The Burning Tree Changelog:
 
+## v0.2.0 10/16/20
+- Added electricity layer
+- Rebalanced things in ash and coal layers
+- Fixed hotkeys
+
 ## v0.1.1 10/15/20
 - Fixed coal reset
 - Added milestone for new prestige upgrades
