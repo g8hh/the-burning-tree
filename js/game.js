@@ -4,7 +4,7 @@ var NaNalert = false;
 var gameEnded = false;
 
 let modInfo = {
-	name: "The Burning Tree",
+	name: "燃烧树 - The Burning Tree",
 	id: "uptake-theburningtree",
 	pointsName: "embers",
 	discordName: "",
