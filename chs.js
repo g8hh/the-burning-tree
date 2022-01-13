@@ -71,6 +71,7 @@ var cnItems = {
     "The flame's effect boosts coal's effect.": "火焰的效果会增强煤炭的效果。",
     "The flame's effect is impacted less by the flame's strength.": "火焰的效果受火焰强度的影响较小。",
     "Your coal boosts your ember gain.": "你的煤炭会增加你的余烬收益。",
+    "a: reset your embers for ashes": "a：将你的余烬重置为灰烬",
     "": "",
     "": "",
     "": "",
@@ -122,8 +123,7 @@ var cnItems = {
     "": "",
     "": "",
     "": "",
-    "": "",
-    "": "",
+    "my discord": "my discord",
 
     //树游戏
     'Loading...': '加载中...',
@@ -274,6 +274,7 @@ var cnExcludeWhole = [
     /^\/([\d\.]+)$/,
     /^离线时间: ([\d\.]+)s$/,
     /^火焰强度：([\d\.]+)$/,
+    /^已玩时长：(.+)$/,
     /^([\d\.]+)s$/,
     /^([\d\.]+)x$/,
     /^x([\d\.]+)$/,
